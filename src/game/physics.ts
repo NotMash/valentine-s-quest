@@ -1,11 +1,12 @@
-import { Player, Platform, Heart, GAME_CONFIG, Particle } from './types';
+import { Player, Platform, Heart, Enemy, GAME_CONFIG, Particle } from './types';
 import { KeyState } from '../hooks/useKeyboard';
 
 export const updatePlayer = (
   player: Player,
   keys: KeyState,
   platforms: Platform[],
-  deltaTime: number
+  deltaTime: number,
+  boostAvailable: boolean
 ): Player => {
   let newPlayer = { ...player };
   
@@ -20,10 +21,13 @@ export const updatePlayer = (
     newPlayer.velocity.x *= GAME_CONFIG.friction;
   }
 
-  // Jump (boost with shift held)
+  // Jump with momentum bonus — faster horizontal speed = higher jump
   if (keys.up && newPlayer.isGrounded) {
-    const force = keys.boost ? GAME_CONFIG.boostJumpForce : GAME_CONFIG.jumpForce;
-    newPlayer.velocity.y = -force;
+    const speedRatio = Math.abs(newPlayer.velocity.x) / GAME_CONFIG.moveSpeed;
+    const momentumBonus = 1 + speedRatio * GAME_CONFIG.momentumBonus;
+    const useBoost = keys.boost && boostAvailable;
+    const baseForce = useBoost ? GAME_CONFIG.boostJumpForce : GAME_CONFIG.jumpForce;
+    newPlayer.velocity.y = -(baseForce * momentumBonus);
     newPlayer.isGrounded = false;
   }
 
@@ -48,7 +52,6 @@ export const updatePlayer = (
   newPlayer.isGrounded = false;
   for (const platform of platforms) {
     if (checkPlatformCollision(newPlayer, platform)) {
-      // Only collide from above — use generous threshold
       const playerBottom = player.position.y + player.height;
       const platformTop = platform.y;
       if (player.velocity.y >= 0 && playerBottom <= platformTop + 20) {
@@ -93,6 +96,27 @@ export const checkHeartCollision = (player: Player, heart: Heart): boolean => {
   return distance < (player.width / 2 + heart.size / 2);
 };
 
+export const checkEnemyCollision = (player: Player, enemy: Enemy): boolean => {
+  return (
+    player.position.x < enemy.x + enemy.width &&
+    player.position.x + player.width > enemy.x &&
+    player.position.y < enemy.y + enemy.height &&
+    player.position.y + player.height > enemy.y
+  );
+};
+
+export const updateEnemies = (enemies: Enemy[], deltaTime: number): Enemy[] => {
+  return enemies.map(enemy => {
+    let newX = enemy.x + enemy.vx * deltaTime;
+    let newVx = enemy.vx;
+    if (newX <= enemy.minX || newX + enemy.width >= enemy.maxX) {
+      newVx = -newVx;
+      newX = Math.max(enemy.minX, Math.min(newX, enemy.maxX - enemy.width));
+    }
+    return { ...enemy, x: newX, vx: newVx };
+  });
+};
+
 export const createHeartParticles = (x: number, y: number): Particle[] => {
   const particles: Particle[] = [];
   const colors = ['#ff6b9d', '#ff8fab', '#ffc2d1', '#ff85a1'];
@@ -112,6 +136,24 @@ export const createHeartParticles = (x: number, y: number): Particle[] => {
     });
   }
   
+  return particles;
+};
+
+export const createDamageParticles = (x: number, y: number): Particle[] => {
+  const particles: Particle[] = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI * 2 / 6) * i;
+    particles.push({
+      id: Date.now() + i + 100,
+      x, y,
+      vx: Math.cos(angle) * 120,
+      vy: Math.sin(angle) * 120 - 60,
+      life: 0.8,
+      maxLife: 0.8,
+      size: 6 + Math.random() * 4,
+      color: ['#ff4444', '#ff6666', '#ff8888'][Math.floor(Math.random() * 3)],
+    });
+  }
   return particles;
 };
 
