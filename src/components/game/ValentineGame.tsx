@@ -6,15 +6,15 @@ import { useGameLoop } from '../../hooks/useGameLoop';
 import { useKeyboard } from '../../hooks/useKeyboard';
 import { GameState, GAME_CONFIG } from '../../game/types';
 import { createLevel, TOTAL_LEVELS } from '../../game/levels';
-import { updatePlayer, checkHeartCollision, createHeartParticles, updateParticles } from '../../game/physics';
-import { playJumpSound, playCollectSound, playWinSound, playLevelCompleteSound } from '../../game/sounds';
+import { updatePlayer, checkHeartCollision, checkEnemyCollision, updateEnemies, createHeartParticles, createDamageParticles, updateParticles } from '../../game/physics';
+import { playJumpSound, playCollectSound, playHitSound, playWinSound, playLevelCompleteSound } from '../../game/sounds';
 
 interface ValentineGameProps {
   girlfriendName?: string;
 }
 
 const createInitialState = (level: number = 1): GameState => {
-  const { platforms, hearts } = createLevel(level);
+  const { platforms, hearts, enemies, background } = createLevel(level);
   return {
     player: {
       position: { x: 100, y: 450 },
@@ -26,15 +26,24 @@ const createInitialState = (level: number = 1): GameState => {
     },
     platforms,
     hearts,
+    enemies,
     particles: [],
     score: 0,
     totalHearts: hearts.length,
+    collectedHearts: 0,
     gameWon: false,
     gameStarted: false,
     level,
     levelComplete: false,
     screenShake: 0,
     sparkleTrails: [],
+    boostEnergy: 100,
+    boostMaxEnergy: 100,
+    boostCooldown: false,
+    playerHearts: 5,
+    maxPlayerHearts: 5,
+    invincibleTimer: 0,
+    background,
   };
 };
 
@@ -55,32 +64,108 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
     setGameState(prev => {
       if (!prev.gameStarted || prev.gameWon || prev.levelComplete) return prev;
 
-      const newPlayer = updatePlayer(prev.player, combinedKeys, prev.platforms, deltaTime);
+      // Boost energy
+      let boostEnergy = prev.boostEnergy;
+      let boostCooldown = prev.boostCooldown;
+      const wantsBoost = combinedKeys.boost && combinedKeys.up && prev.player.isGrounded;
+      
+      if (wantsBoost && boostEnergy >= GAME_CONFIG.boostCost && !boostCooldown) {
+        // Will consume on jump
+      }
 
-      // Jump sound
-      if (prevGrounded.current && !newPlayer.isGrounded && newPlayer.velocity.y < 0) {
+      const boostAvailable = boostEnergy >= GAME_CONFIG.boostCost && !boostCooldown;
+      const newPlayer = updatePlayer(prev.player, combinedKeys, prev.platforms, deltaTime, boostAvailable);
+
+      // Detect jump happened (was grounded, now airborne with upward velocity)
+      const justJumped = prevGrounded.current && !newPlayer.isGrounded && newPlayer.velocity.y < 0;
+      if (justJumped) {
         playJumpSound();
+        if (combinedKeys.boost && boostAvailable) {
+          boostEnergy = Math.max(0, boostEnergy - GAME_CONFIG.boostCost);
+          if (boostEnergy < GAME_CONFIG.boostCost) {
+            boostCooldown = true;
+          }
+        }
       }
       prevGrounded.current = newPlayer.isGrounded;
 
-      // Check heart collisions
-      let newHearts = [...prev.hearts];
-      let newScore = prev.score;
+      // Regen boost
+      if (!wantsBoost) {
+        boostEnergy = Math.min(prev.boostMaxEnergy, boostEnergy + GAME_CONFIG.boostRegenRate * deltaTime);
+        if (boostEnergy >= GAME_CONFIG.boostCost) {
+          boostCooldown = false;
+        }
+      }
+
+      // Update enemies
+      const newEnemies = updateEnemies(prev.enemies, deltaTime);
+
+      // Check enemy collisions
+      let playerHearts = prev.playerHearts;
+      let invincibleTimer = Math.max(0, prev.invincibleTimer - deltaTime);
       let newParticles = [...prev.particles];
       let screenShake = Math.max(0, prev.screenShake - deltaTime * 10);
 
+      if (invincibleTimer <= 0) {
+        for (const enemy of newEnemies) {
+          if (checkEnemyCollision(newPlayer, enemy)) {
+            playerHearts = Math.max(0, playerHearts - 1);
+            invincibleTimer = 1.5;
+            screenShake = 5;
+            playHitSound();
+            newParticles = [...newParticles, ...createDamageParticles(
+              newPlayer.position.x + newPlayer.width / 2,
+              newPlayer.position.y + newPlayer.height / 2
+            )];
+            // Knock player back
+            newPlayer.velocity.y = -300;
+            newPlayer.velocity.x = newPlayer.position.x < enemy.x ? -200 : 200;
+            break;
+          }
+        }
+      }
+
+      // Check heart collisions (collectible hearts)
+      let newHearts = [...prev.hearts];
+      let collectedHearts = prev.collectedHearts;
+
       newHearts = newHearts.map(heart => {
         if (!heart.collected && checkHeartCollision(newPlayer, heart)) {
-          newScore++;
+          collectedHearts++;
           newParticles = [...newParticles, ...createHeartParticles(heart.x + heart.size / 2, heart.y + heart.size / 2)];
           screenShake = 3;
           playCollectSound();
-          return { ...heart, collected: true };
+          return { ...heart, collected: true, respawnTimer: undefined };
         }
         return heart;
       });
 
-      // Sparkle trail behind player when moving
+      // Respawn hearts that were lost (from enemy hits)
+      // If player lost hearts, some collected hearts get "uncollected" after 5 seconds
+      newHearts = newHearts.map(heart => {
+        if (heart.collected && heart.respawnTimer !== undefined) {
+          const newTimer = heart.respawnTimer - deltaTime;
+          if (newTimer <= 0) {
+            collectedHearts = Math.max(0, collectedHearts - 1);
+            return { ...heart, collected: false, respawnTimer: undefined };
+          }
+          return { ...heart, respawnTimer: newTimer };
+        }
+        return heart;
+      });
+
+      // If player lost a heart from enemy, mark last collected heart for respawn
+      if (playerHearts < prev.playerHearts) {
+        const collectedHeartsArr = newHearts.filter(h => h.collected && h.respawnTimer === undefined);
+        if (collectedHeartsArr.length > 0) {
+          const lastCollected = collectedHeartsArr[collectedHeartsArr.length - 1];
+          newHearts = newHearts.map(h => 
+            h.id === lastCollected.id ? { ...h, respawnTimer: GAME_CONFIG.heartRespawnTime } : h
+          );
+        }
+      }
+
+      // Sparkle trail
       let sparkleTrails = [...prev.sparkleTrails];
       if (Math.abs(newPlayer.velocity.x) > 50 || Math.abs(newPlayer.velocity.y) > 50) {
         sparkleTrails.push({
@@ -101,8 +186,9 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
 
       newParticles = updateParticles(newParticles, deltaTime);
 
-      // Check level complete
-      const levelComplete = newScore >= prev.totalHearts;
+      // Level complete when ALL hearts collected (none pending respawn)
+      const allCollected = newHearts.every(h => h.collected);
+      const levelComplete = allCollected && collectedHearts >= prev.totalHearts;
       const gameWon = levelComplete && prev.level >= TOTAL_LEVELS;
 
       if (levelComplete && !prev.levelComplete) {
@@ -117,12 +203,18 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
         ...prev,
         player: newPlayer,
         hearts: newHearts,
+        enemies: newEnemies,
         particles: newParticles,
-        score: newScore,
+        score: collectedHearts,
+        collectedHearts,
         gameWon,
         levelComplete: levelComplete && !gameWon,
         screenShake,
         sparkleTrails,
+        boostEnergy,
+        boostCooldown,
+        playerHearts,
+        invincibleTimer,
       };
     });
 
@@ -145,6 +237,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
     const nextLevel = gameState.level + 1;
     const newState = createInitialState(nextLevel);
     newState.gameStarted = true;
+    newState.playerHearts = gameState.playerHearts; // Carry over health
     setGameState(newState);
   };
 
@@ -182,7 +275,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
           <GameCanvas gameState={gameState} />
         </div>
         <GameUI
-          score={gameState.score}
+          score={gameState.collectedHearts}
           totalHearts={gameState.totalHearts}
           gameStarted={gameState.gameStarted}
           gameWon={gameState.gameWon}
@@ -193,6 +286,11 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
           onRestart={handleRestart}
           onNextLevel={handleNextLevel}
           girlfriendName={girlfriendName}
+          boostEnergy={gameState.boostEnergy}
+          boostMaxEnergy={gameState.boostMaxEnergy}
+          boostCooldown={gameState.boostCooldown}
+          playerHearts={gameState.playerHearts}
+          maxPlayerHearts={gameState.maxPlayerHearts}
         />
       </div>
 
@@ -207,7 +305,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
       />
 
       <p className="mt-4 text-sm text-foreground/60 text-center hidden md:block">
-        Arrow Keys / WASD to move • Space / Up to jump • Hold Shift for boost jump 🚀
+        Arrow Keys / WASD to move • Space / Up to jump • Hold Shift + Jump for boost 🚀 • Build momentum for higher jumps!
       </p>
     </div>
   );
