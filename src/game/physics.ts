@@ -20,9 +20,10 @@ export const updatePlayer = (
     newPlayer.velocity.x *= GAME_CONFIG.friction;
   }
 
-  // Jump
+  // Jump (boost with shift held)
   if (keys.up && newPlayer.isGrounded) {
-    newPlayer.velocity.y = -GAME_CONFIG.jumpForce;
+    const force = keys.boost ? GAME_CONFIG.boostJumpForce : GAME_CONFIG.jumpForce;
+    newPlayer.velocity.y = -force;
     newPlayer.isGrounded = false;
   }
 

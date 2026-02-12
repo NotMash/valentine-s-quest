@@ -41,13 +41,14 @@ const createInitialState = (level: number = 1): GameState => {
 const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
   const [gameState, setGameState] = useState<GameState>(() => createInitialState(1));
   const keys = useKeyboard();
-  const [mobileKeys, setMobileKeys] = useState({ left: false, right: false, up: false });
+  const [mobileKeys, setMobileKeys] = useState({ left: false, right: false, up: false, boost: false });
   const prevGrounded = useRef(false);
 
   const combinedKeys = {
     left: keys.left || mobileKeys.left,
     right: keys.right || mobileKeys.right,
     up: keys.up || mobileKeys.up,
+    boost: keys.boost || mobileKeys.boost,
   };
 
   const gameLoop = useCallback((deltaTime: number) => {
@@ -201,10 +202,12 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
         onRightStart={() => setMobileKeys(prev => ({ ...prev, right: true }))}
         onRightEnd={() => setMobileKeys(prev => ({ ...prev, right: false }))}
         onJump={() => setMobileKeys(prev => ({ ...prev, up: true }))}
+        onBoostStart={() => setMobileKeys(prev => ({ ...prev, boost: true }))}
+        onBoostEnd={() => setMobileKeys(prev => ({ ...prev, boost: false }))}
       />
 
       <p className="mt-4 text-sm text-foreground/60 text-center hidden md:block">
-        Arrow Keys / WASD to move • Space / Up to jump
+        Arrow Keys / WASD to move • Space / Up to jump • Hold Shift for boost jump 🚀
       </p>
     </div>
   );
