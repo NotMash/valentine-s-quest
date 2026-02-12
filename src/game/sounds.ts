@@ -23,7 +23,7 @@ export const playJumpSound = () => {
 
 export const playCollectSound = () => {
   const ctx = getCtx();
-  const notes = [523, 659, 784, 1047];
+  const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
   notes.forEach((freq, i) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -36,21 +36,6 @@ export const playCollectSound = () => {
     osc.start(ctx.currentTime + i * 0.08);
     osc.stop(ctx.currentTime + i * 0.08 + 0.3);
   });
-};
-
-export const playHitSound = () => {
-  const ctx = getCtx();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(200, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.2);
-  gain.gain.setValueAtTime(0.15, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + 0.3);
 };
 
 export const playWinSound = () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Zap, ArrowUp, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 interface GameUIProps {
   score: number;
@@ -13,11 +13,6 @@ interface GameUIProps {
   onRestart: () => void;
   onNextLevel: () => void;
   girlfriendName?: string;
-  boostEnergy: number;
-  boostMaxEnergy: number;
-  boostCooldown: boolean;
-  playerHearts: number;
-  maxPlayerHearts: number;
 }
 
 const GameUI: React.FC<GameUIProps> = ({
@@ -32,69 +27,37 @@ const GameUI: React.FC<GameUIProps> = ({
   onRestart,
   onNextLevel,
   girlfriendName = "My Love",
-  boostEnergy,
-  boostMaxEnergy,
-  boostCooldown,
-  playerHearts,
-  maxPlayerHearts,
 }) => {
   if (!gameStarted) {
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-love-pink/20 to-love-coral/20 rounded-2xl backdrop-blur-sm">
-        <div className="text-center p-6 animate-fade-in max-w-md">
-          <div className="flex justify-center gap-2 mb-3">
+        <div className="text-center p-8 animate-fade-in">
+          <div className="flex justify-center gap-2 mb-4">
             {[...Array(3)].map((_, i) => (
               <Heart
                 key={i}
-                className="w-7 h-7 text-love-pink fill-love-pink animate-pulse-heart"
+                className="w-8 h-8 text-love-pink fill-love-pink animate-pulse-heart"
                 style={{ animationDelay: `${i * 0.2}s` }}
               />
             ))}
           </div>
-          <h1 className="text-3xl font-bold text-love-pink mb-1">
+          <h1 className="text-4xl font-bold text-love-pink mb-2">
             Love's Journey
           </h1>
-          <p className="text-base text-foreground/70 mb-4">
+          <p className="text-lg text-foreground/70 mb-6">
             A Valentine's Adventure for {girlfriendName} 💕
           </p>
-          
-          {/* Controls section */}
-          <div className="bg-white/70 rounded-xl p-4 mb-4 text-left shadow-sm">
-            <h3 className="font-semibold text-foreground text-sm mb-2 text-center">🎮 Controls</h3>
-            <div className="grid grid-cols-2 gap-2 text-xs text-foreground/80">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-0.5">
-                  <span className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px]">←</span>
-                  <span className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px]">→</span>
-                </div>
-                <span>Move</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px]">WASD</span>
-                <span>Move</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px]">Space</span>
-                <span>Jump</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px]">Shift</span>
-                <span>Boost Jump 🚀</span>
-              </div>
-            </div>
-            <div className="mt-2 pt-2 border-t border-border/50 text-[10px] text-foreground/60 text-center">
-              💡 Move fast to build momentum for higher jumps! • Avoid enemies! 👾
-            </div>
-          </div>
-
           <button
             onClick={onStart}
-            className="px-8 py-3 bg-love-pink text-white rounded-full font-semibold text-lg
+            className="px-8 py-4 bg-love-pink text-white rounded-full font-semibold text-lg
                        shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300
                        hover:bg-love-coral"
           >
             Start Playing
           </button>
+          <p className="mt-6 text-sm text-muted-foreground">
+            Use Arrow Keys or WASD to move • Space to jump
+          </p>
         </div>
       </div>
     );
@@ -172,43 +135,14 @@ const GameUI: React.FC<GameUIProps> = ({
     );
   }
 
-  // In-game HUD
-  const boostPercent = (boostEnergy / boostMaxEnergy) * 100;
-
   return (
-    <>
-      {/* Top-left: Level + Hearts collected */}
-      <div className="absolute top-4 left-4 flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md">
-        <span className="text-sm font-semibold text-foreground/60">Lv.{level}</span>
-        <Heart className="w-5 h-5 text-love-pink fill-love-pink animate-pulse-heart" />
-        <span className="font-semibold text-foreground text-sm">
-          {score} / {totalHearts}
-        </span>
-      </div>
-
-      {/* Top-right: Player health */}
-      <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 shadow-md">
-        {[...Array(maxPlayerHearts)].map((_, i) => (
-          <Heart
-            key={i}
-            className={`w-4 h-4 ${i < playerHearts ? 'text-love-pink fill-love-pink' : 'text-muted-foreground/30'}`}
-          />
-        ))}
-      </div>
-
-      {/* Bottom-left: Boost bar */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 shadow-md">
-        <Zap className={`w-4 h-4 ${boostCooldown ? 'text-muted-foreground/40' : 'text-love-coral'}`} />
-        <div className="w-20 h-2.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-200 ${
-              boostCooldown ? 'bg-muted-foreground/30' : 'bg-love-coral'
-            }`}
-            style={{ width: `${boostPercent}%` }}
-          />
-        </div>
-      </div>
-    </>
+    <div className="absolute top-4 left-4 flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md">
+      <span className="text-sm font-semibold text-foreground/60">Lv.{level}</span>
+      <Heart className="w-6 h-6 text-love-pink fill-love-pink animate-pulse-heart" />
+      <span className="font-semibold text-foreground">
+        {score} / {totalHearts}
+      </span>
+    </div>
   );
 };
 
