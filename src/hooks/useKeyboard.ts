@@ -4,6 +4,7 @@ export interface KeyState {
   left: boolean;
   right: boolean;
   up: boolean;
+  boost: boolean;
 }
 
 export const useKeyboard = () => {
@@ -11,6 +12,7 @@ export const useKeyboard = () => {
     left: false,
     right: false,
     up: false,
+    boost: false,
   });
 
   useEffect(() => {
@@ -29,6 +31,10 @@ export const useKeyboard = () => {
         case 'Space':
           setKeys(prev => ({ ...prev, up: true }));
           break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          setKeys(prev => ({ ...prev, boost: true }));
+          break;
       }
     };
 
@@ -46,6 +52,10 @@ export const useKeyboard = () => {
         case 'KeyW':
         case 'Space':
           setKeys(prev => ({ ...prev, up: false }));
+          break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          setKeys(prev => ({ ...prev, boost: false }));
           break;
       }
     };

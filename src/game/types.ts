@@ -65,6 +65,7 @@ export const GAME_CONFIG = {
   height: 600,
   gravity: 1800,
   jumpForce: 600,
+  boostJumpForce: 850,
   moveSpeed: 350,
   friction: 0.85,
   playerSize: 40,
