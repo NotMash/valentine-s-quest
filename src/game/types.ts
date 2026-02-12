@@ -54,6 +54,10 @@ export interface GameState {
   totalHearts: number;
   gameWon: boolean;
   gameStarted: boolean;
+  level: number;
+  levelComplete: boolean;
+  screenShake: number;
+  sparkleTrails: Particle[];
 }
 
 export const GAME_CONFIG = {

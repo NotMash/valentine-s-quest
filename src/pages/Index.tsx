@@ -1,7 +1,7 @@
 import ValentineGame from '../components/game/ValentineGame';
 
 const Index = () => {
-  return <ValentineGame girlfriendName="My Love" />;
+  return <ValentineGame girlfriendName="Shahina" />;
 };
 
 export default Index;
