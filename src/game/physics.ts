@@ -47,10 +47,11 @@ export const updatePlayer = (
   newPlayer.isGrounded = false;
   for (const platform of platforms) {
     if (checkPlatformCollision(newPlayer, platform)) {
-      // Only collide from above
-      if (player.velocity.y > 0 && 
-          player.position.y + player.height <= platform.y + 10) {
-        newPlayer.position.y = platform.y - newPlayer.height;
+      // Only collide from above — use generous threshold
+      const playerBottom = player.position.y + player.height;
+      const platformTop = platform.y;
+      if (player.velocity.y >= 0 && playerBottom <= platformTop + 20) {
+        newPlayer.position.y = platformTop - newPlayer.height;
         newPlayer.velocity.y = 0;
         newPlayer.isGrounded = true;
       }

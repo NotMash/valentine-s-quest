@@ -16,8 +16,17 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    ctx.save();
+
+    // Screen shake
+    if (gameState.screenShake > 0) {
+      const shakeX = (Math.random() - 0.5) * gameState.screenShake * 2;
+      const shakeY = (Math.random() - 0.5) * gameState.screenShake * 2;
+      ctx.translate(shakeX, shakeY);
+    }
+
     // Clear canvas
-    ctx.clearRect(0, 0, GAME_CONFIG.width, GAME_CONFIG.height);
+    ctx.clearRect(-10, -10, GAME_CONFIG.width + 20, GAME_CONFIG.height + 20);
 
     // Draw sky gradient background
     const gradient = ctx.createLinearGradient(0, 0, 0, GAME_CONFIG.height);
@@ -45,6 +54,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
       }
     });
 
+    // Draw sparkle trails
+    gameState.sparkleTrails.forEach(spark => {
+      ctx.globalAlpha = spark.life / spark.maxLife;
+      ctx.fillStyle = spark.color;
+      const s = spark.size * (spark.life / spark.maxLife);
+      // Draw as star shape
+      drawStar(ctx, spark.x, spark.y, s);
+      ctx.globalAlpha = 1;
+    });
+
     // Draw particles
     gameState.particles.forEach(particle => {
       ctx.globalAlpha = particle.life;
@@ -55,6 +74,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
     // Draw player
     drawPlayer(ctx, gameState.player, frameRef.current);
 
+    ctx.restore();
     frameRef.current += 1;
   }, [gameState]);
 
@@ -202,6 +222,21 @@ const drawMiniHeart = (
   color: string
 ) => {
   drawHeartShape(ctx, x - size / 2, y - size / 2, size, color);
+};
+
+const drawStar = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+  ctx.beginPath();
+  for (let i = 0; i < 4; i++) {
+    const angle = (Math.PI / 2) * i;
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(angle) * size, y + Math.sin(angle) * size);
+  }
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = ctx.fillStyle as string;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
+  ctx.fill();
 };
 
 const drawHeartShape = (

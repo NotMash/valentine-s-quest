@@ -6,8 +6,12 @@ interface GameUIProps {
   totalHearts: number;
   gameStarted: boolean;
   gameWon: boolean;
+  levelComplete: boolean;
+  level: number;
+  totalLevels: number;
   onStart: () => void;
   onRestart: () => void;
+  onNextLevel: () => void;
   girlfriendName?: string;
 }
 
@@ -16,8 +20,12 @@ const GameUI: React.FC<GameUIProps> = ({
   totalHearts,
   gameStarted,
   gameWon,
+  levelComplete,
+  level,
+  totalLevels,
   onStart,
   onRestart,
+  onNextLevel,
   girlfriendName = "My Love",
 }) => {
   if (!gameStarted) {
@@ -50,6 +58,38 @@ const GameUI: React.FC<GameUIProps> = ({
           <p className="mt-6 text-sm text-muted-foreground">
             Use Arrow Keys or WASD to move • Space to jump
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (levelComplete) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-love-pink/20 to-love-coral/20 rounded-2xl backdrop-blur-sm">
+        <div className="text-center p-8 animate-scale-in">
+          <div className="flex justify-center gap-1 mb-4">
+            {[...Array(3)].map((_, i) => (
+              <Heart
+                key={i}
+                className="w-8 h-8 text-love-pink fill-love-pink animate-float"
+                style={{ animationDelay: `${i * 0.15}s` }}
+              />
+            ))}
+          </div>
+          <h1 className="text-3xl font-bold text-love-pink mb-2">
+            Level {level} Complete! ✨
+          </h1>
+          <p className="text-lg text-foreground/70 mb-6">
+            Amazing! Ready for the next adventure?
+          </p>
+          <button
+            onClick={onNextLevel}
+            className="px-8 py-4 bg-love-pink text-white rounded-full font-semibold text-lg
+                       shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300
+                       hover:bg-love-coral"
+          >
+            Next Level →
+          </button>
         </div>
       </div>
     );
@@ -96,7 +136,8 @@ const GameUI: React.FC<GameUIProps> = ({
   }
 
   return (
-    <div className="absolute top-4 left-4 flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md">
+    <div className="absolute top-4 left-4 flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md">
+      <span className="text-sm font-semibold text-foreground/60">Lv.{level}</span>
       <Heart className="w-6 h-6 text-love-pink fill-love-pink animate-pulse-heart" />
       <span className="font-semibold text-foreground">
         {score} / {totalHearts}
