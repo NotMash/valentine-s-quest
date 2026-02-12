@@ -31,6 +31,18 @@ export interface Heart {
   y: number;
   collected: boolean;
   size: number;
+  respawnTimer?: number;
+}
+
+export interface Enemy {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  vx: number;
+  minX: number;
+  maxX: number;
 }
 
 export interface Particle {
@@ -45,19 +57,34 @@ export interface Particle {
   color: string;
 }
 
+export interface LevelBackground {
+  skyTop: string;
+  skyBottom: string;
+  name: string;
+}
+
 export interface GameState {
   player: Player;
   platforms: Platform[];
   hearts: Heart[];
+  enemies: Enemy[];
   particles: Particle[];
   score: number;
   totalHearts: number;
+  collectedHearts: number;
   gameWon: boolean;
   gameStarted: boolean;
   level: number;
   levelComplete: boolean;
   screenShake: number;
   sparkleTrails: Particle[];
+  boostEnergy: number;
+  boostMaxEnergy: number;
+  boostCooldown: boolean;
+  playerHearts: number;
+  maxPlayerHearts: number;
+  invincibleTimer: number;
+  background: LevelBackground;
 }
 
 export const GAME_CONFIG = {
@@ -69,4 +96,8 @@ export const GAME_CONFIG = {
   moveSpeed: 350,
   friction: 0.85,
   playerSize: 40,
+  momentumBonus: 0.15,
+  boostCost: 40,
+  boostRegenRate: 15,
+  heartRespawnTime: 5,
 };
