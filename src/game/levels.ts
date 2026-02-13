@@ -52,7 +52,8 @@ const createLevel2 = (): LevelData => ({
   name: "Skyward Serenade",
   background: { skyTop: '#ffecd2', skyBottom: '#fcb69f', name: 'sunset' },
   enemies: [
-    { id: 1, x: 300, y: 520, width: 30, height: 30, vx: 60, minX: 200, maxX: 580 },
+    { id: 1, x: 300, y: 520, width: 30, height: 30, vx: 60, vy: 0, minX: 200, maxX: 580, type: 'patrol' },
+    { id: 2, x: 500, y: 520, width: 30, height: 30, vx: -40, vy: 0, minX: 400, maxX: 780, type: 'chaser', chaseSpeed: 100 },
   ],
   platforms: [
     { x: 0, y: 550, width: 800, height: 50, type: 'ground' },
@@ -85,8 +86,9 @@ const createLevel3 = (): LevelData => ({
   name: "Twilight Garden",
   background: { skyTop: '#a18cd1', skyBottom: '#fbc2eb', name: 'twilight' },
   enemies: [
-    { id: 1, x: 200, y: 520, width: 30, height: 30, vx: 70, minX: 0, maxX: 400 },
-    { id: 2, x: 500, y: 520, width: 30, height: 30, vx: -50, minX: 400, maxX: 780 },
+    { id: 1, x: 200, y: 520, width: 30, height: 30, vx: 70, vy: 0, minX: 0, maxX: 400, type: 'patrol' },
+    { id: 2, x: 500, y: 520, width: 30, height: 30, vx: -50, vy: 0, minX: 400, maxX: 780, type: 'chaser', chaseSpeed: 120 },
+    { id: 3, x: 350, y: 370, width: 25, height: 25, vx: 40, vy: 0, minX: 250, maxX: 500, type: 'jumper', jumpTimer: 0 },
   ],
   platforms: [
     { x: 0, y: 550, width: 800, height: 50, type: 'ground' },
@@ -121,9 +123,10 @@ const createLevel4 = (): LevelData => ({
   name: "Starlight Chase",
   background: { skyTop: '#0c1445', skyBottom: '#3a1c71', name: 'night' },
   enemies: [
-    { id: 1, x: 100, y: 520, width: 30, height: 30, vx: 80, minX: 0, maxX: 350 },
-    { id: 2, x: 500, y: 520, width: 30, height: 30, vx: -60, minX: 400, maxX: 780 },
-    { id: 3, x: 300, y: 250, width: 25, height: 25, vx: 50, minX: 200, maxX: 500 },
+    { id: 1, x: 100, y: 520, width: 30, height: 30, vx: 80, vy: 0, minX: 0, maxX: 350, type: 'chaser', chaseSpeed: 130 },
+    { id: 2, x: 500, y: 520, width: 30, height: 30, vx: -60, vy: 0, minX: 400, maxX: 780, type: 'chaser', chaseSpeed: 110 },
+    { id: 3, x: 300, y: 250, width: 25, height: 25, vx: 50, vy: 0, minX: 200, maxX: 500, type: 'jumper', jumpTimer: 0 },
+    { id: 4, x: 600, y: 350, width: 25, height: 25, vx: -40, vy: 0, minX: 550, maxX: 750, type: 'patrol' },
   ],
   platforms: [
     { x: 0, y: 550, width: 350, height: 50, type: 'ground' },
@@ -161,10 +164,11 @@ const createLevel5 = (): LevelData => ({
   name: "Love's Summit",
   background: { skyTop: '#ff9a9e', skyBottom: '#fecfef', name: 'love' },
   enemies: [
-    { id: 1, x: 100, y: 520, width: 30, height: 30, vx: 90, minX: 0, maxX: 300 },
-    { id: 2, x: 500, y: 520, width: 30, height: 30, vx: -70, minX: 400, maxX: 780 },
-    { id: 3, x: 350, y: 350, width: 25, height: 25, vx: 60, minX: 250, maxX: 550 },
-    { id: 4, x: 200, y: 150, width: 25, height: 25, vx: -50, minX: 80, maxX: 400 },
+    { id: 1, x: 100, y: 520, width: 30, height: 30, vx: 90, vy: 0, minX: 0, maxX: 300, type: 'chaser', chaseSpeed: 150 },
+    { id: 2, x: 500, y: 520, width: 30, height: 30, vx: -70, vy: 0, minX: 400, maxX: 780, type: 'chaser', chaseSpeed: 140 },
+    { id: 3, x: 350, y: 350, width: 25, height: 25, vx: 60, vy: 0, minX: 250, maxX: 550, type: 'jumper', jumpTimer: 0 },
+    { id: 4, x: 200, y: 150, width: 25, height: 25, vx: -50, vy: 0, minX: 80, maxX: 400, type: 'jumper', jumpTimer: 1.5 },
+    { id: 5, x: 650, y: 200, width: 25, height: 25, vx: 45, vy: 0, minX: 550, maxX: 750, type: 'patrol' },
   ],
   platforms: [
     { x: 150, y: 550, width: 200, height: 50, type: 'ground' },

@@ -32,6 +32,7 @@ const createInitialState = (level: number = 1): GameState => {
     totalHearts: hearts.length,
     collectedHearts: 0,
     gameWon: false,
+    gameOver: false,
     gameStarted: false,
     level,
     levelComplete: false,
@@ -62,7 +63,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
 
   const gameLoop = useCallback((deltaTime: number) => {
     setGameState(prev => {
-      if (!prev.gameStarted || prev.gameWon || prev.levelComplete) return prev;
+      if (!prev.gameStarted || prev.gameWon || prev.levelComplete || prev.gameOver) return prev;
 
       // Boost energy
       let boostEnergy = prev.boostEnergy;
@@ -98,7 +99,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
       }
 
       // Update enemies
-      const newEnemies = updateEnemies(prev.enemies, deltaTime);
+      const newEnemies = updateEnemies(prev.enemies, deltaTime, newPlayer.position.x, newPlayer.position.y);
 
       // Check enemy collisions
       let playerHearts = prev.playerHearts;
@@ -190,6 +191,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
       const allCollected = newHearts.every(h => h.collected);
       const levelComplete = allCollected && collectedHearts >= prev.totalHearts;
       const gameWon = levelComplete && prev.level >= TOTAL_LEVELS;
+      const gameOver = playerHearts <= 0;
 
       if (levelComplete && !prev.levelComplete) {
         if (gameWon) {
@@ -208,6 +210,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
         score: collectedHearts,
         collectedHearts,
         gameWon,
+        gameOver,
         levelComplete: levelComplete && !gameWon,
         screenShake,
         sparkleTrails,
@@ -223,7 +226,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
     }
   }, [combinedKeys, mobileKeys.up]);
 
-  useGameLoop(gameLoop, gameState.gameStarted && !gameState.gameWon && !gameState.levelComplete);
+  useGameLoop(gameLoop, gameState.gameStarted && !gameState.gameWon && !gameState.levelComplete && !gameState.gameOver);
 
   const handleStart = () => {
     setGameState(prev => ({ ...prev, gameStarted: true }));
@@ -279,6 +282,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
           totalHearts={gameState.totalHearts}
           gameStarted={gameState.gameStarted}
           gameWon={gameState.gameWon}
+          gameOver={gameState.gameOver}
           levelComplete={gameState.levelComplete}
           level={gameState.level}
           totalLevels={TOTAL_LEVELS}

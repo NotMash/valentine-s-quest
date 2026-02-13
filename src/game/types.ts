@@ -41,8 +41,12 @@ export interface Enemy {
   width: number;
   height: number;
   vx: number;
+  vy: number;
   minX: number;
   maxX: number;
+  type: 'patrol' | 'chaser' | 'jumper';
+  chaseSpeed?: number;
+  jumpTimer?: number;
 }
 
 export interface Particle {
@@ -73,6 +77,7 @@ export interface GameState {
   totalHearts: number;
   collectedHearts: number;
   gameWon: boolean;
+  gameOver: boolean;
   gameStarted: boolean;
   level: number;
   levelComplete: boolean;
