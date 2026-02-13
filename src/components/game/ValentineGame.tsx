@@ -14,16 +14,17 @@ interface ValentineGameProps {
 }
 
 const createInitialState = (level: number = 1): GameState => {
-  const { platforms, hearts, enemies, background } = createLevel(level);
+  const { platforms, hearts, enemies, background, spawnPoint } = createLevel(level);
   return {
     player: {
-      position: { x: 100, y: 450 },
+      position: { ...spawnPoint },
       velocity: { x: 0, y: 0 },
       width: GAME_CONFIG.playerSize,
       height: GAME_CONFIG.playerSize,
       isGrounded: false,
       facingRight: true,
     },
+    spawnPoint,
     platforms,
     hearts,
     enemies,
@@ -102,7 +103,8 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
         newPlatforms,
         deltaTime,
         boostEnergy,
-        prev.boostMaxEnergy
+        prev.boostMaxEnergy,
+        prev.spawnPoint
       );
 
       if (boostUsed > 0) {
@@ -177,7 +179,6 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
         if (heart.collected && heart.respawnTimer !== undefined) {
           const newTimer = heart.respawnTimer - deltaTime;
           if (newTimer <= 0) {
-            collectedHearts = Math.max(0, collectedHearts - 1);
             return { ...heart, collected: false, respawnTimer: undefined };
           }
           return { ...heart, respawnTimer: newTimer };
@@ -190,11 +191,15 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
         const collectedHeartsArr = newHearts.filter(h => h.collected && h.respawnTimer === undefined);
         if (collectedHeartsArr.length > 0) {
           const lastCollected = collectedHeartsArr[collectedHeartsArr.length - 1];
+          collectedHearts = Math.max(0, collectedHearts - 1);
           newHearts = newHearts.map(h => 
             h.id === lastCollected.id ? { ...h, respawnTimer: GAME_CONFIG.heartRespawnTime } : h
           );
         }
       }
+
+      // Keep score synced with collectible hearts that are truly secured.
+      collectedHearts = newHearts.filter(h => h.collected && h.respawnTimer === undefined).length;
 
       // Sparkle trail
       let sparkleTrails = [...prev.sparkleTrails];
@@ -265,14 +270,27 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
   };
 
   const handleRestart = () => {
+    if (gameState.gameOver) {
+      const retryState = createInitialState(gameState.level);
+      retryState.gameStarted = true;
+      retryState.maxPlayerHearts = gameState.maxPlayerHearts;
+      retryState.playerHearts = gameState.maxPlayerHearts;
+      setGameState(retryState);
+      return;
+    }
     setGameState(createInitialState(1));
   };
 
   const handleNextLevel = () => {
     const nextLevel = gameState.level + 1;
     const newState = createInitialState(nextLevel);
+    const levelRewardHearts = 2;
     newState.gameStarted = true;
-    newState.playerHearts = gameState.playerHearts; // Carry over health
+    newState.maxPlayerHearts = Math.min(15, gameState.maxPlayerHearts + levelRewardHearts);
+    newState.playerHearts = Math.min(
+      newState.maxPlayerHearts,
+      gameState.playerHearts + levelRewardHearts
+    );
     setGameState(newState);
   };
 

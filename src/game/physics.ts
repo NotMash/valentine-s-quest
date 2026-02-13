@@ -1,4 +1,4 @@
-import { Player, Platform, Heart, Enemy, GAME_CONFIG, Particle } from './types';
+import { Player, Platform, Heart, Enemy, GAME_CONFIG, Particle, Position } from './types';
 import { KeyState } from '../hooks/useKeyboard';
 
 export const updatePlayer = (
@@ -7,7 +7,8 @@ export const updatePlayer = (
   platforms: Platform[],
   deltaTime: number,
   boostEnergy: number,
-  boostMaxEnergy: number
+  boostMaxEnergy: number,
+  respawnPoint: Position
 ): { player: Player; fellOff: boolean; boostUsed: number; jumped: boolean } => {
   const newPlayer = { ...player };
   let fellOff = false;
@@ -72,7 +73,7 @@ export const updatePlayer = (
 
   // Fall off screen - respawn
   if (newPlayer.position.y > GAME_CONFIG.height + 50) {
-    newPlayer.position = { x: 100, y: 400 };
+    newPlayer.position = { ...respawnPoint };
     newPlayer.velocity = { x: 0, y: 0 };
     fellOff = true;
   }

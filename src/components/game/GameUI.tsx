@@ -131,7 +131,7 @@ const GameUI: React.FC<GameUIProps> = ({
                        shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300
                        hover:bg-love-coral"
           >
-            Try Again from Level 1
+            Retry Level {level}
           </button>
         </div>
       </div>

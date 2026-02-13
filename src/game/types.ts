@@ -74,6 +74,7 @@ export interface LevelBackground {
 
 export interface GameState {
   player: Player;
+  spawnPoint: Position;
   platforms: Platform[];
   hearts: Heart[];
   enemies: Enemy[];
