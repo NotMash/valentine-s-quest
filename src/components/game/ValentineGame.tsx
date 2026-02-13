@@ -44,6 +44,7 @@ const createInitialState = (level: number = 1): GameState => {
     playerHearts: 5,
     maxPlayerHearts: 5,
     invincibleTimer: 0,
+    spawnImmune: true,
     background,
   };
 };
@@ -65,6 +66,10 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
     setGameState(prev => {
       if (!prev.gameStarted || prev.gameWon || prev.levelComplete || prev.gameOver) return prev;
 
+      // Check if player has started moving — end spawn immunity
+      const playerMoved = combinedKeys.left || combinedKeys.right || combinedKeys.up;
+      const spawnImmune = prev.spawnImmune && !playerMoved;
+
       // Boost energy
       let boostEnergy = prev.boostEnergy;
       let boostCooldown = prev.boostCooldown;
@@ -75,30 +80,18 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
       }
 
       const boostAvailable = boostEnergy >= GAME_CONFIG.boostCost && !boostCooldown;
-      const newPlayer = updatePlayer(prev.player, combinedKeys, prev.platforms, deltaTime, boostAvailable);
 
-      // Detect jump happened (was grounded, now airborne with upward velocity)
-      const justJumped = prevGrounded.current && !newPlayer.isGrounded && newPlayer.velocity.y < 0;
-      if (justJumped) {
-        playJumpSound();
-        if (combinedKeys.boost && boostAvailable) {
-          boostEnergy = Math.max(0, boostEnergy - GAME_CONFIG.boostCost);
-          if (boostEnergy < GAME_CONFIG.boostCost) {
-            boostCooldown = true;
-          }
+      // Update platforms (moving clouds)
+      const newPlatforms = prev.platforms.map(p => {
+        if (p.moveSpeed && p.moveRange && p.originalX !== undefined) {
+          const newX = p.originalX + Math.sin(Date.now() * 0.001 * p.moveSpeed) * p.moveRange;
+          return { ...p, x: newX };
         }
-      }
-      prevGrounded.current = newPlayer.isGrounded;
+        return p;
+      });
 
-      // Regen boost
-      if (!wantsBoost) {
-        boostEnergy = Math.min(prev.boostMaxEnergy, boostEnergy + GAME_CONFIG.boostRegenRate * deltaTime);
-        if (boostEnergy >= GAME_CONFIG.boostCost) {
-          boostCooldown = false;
-        }
-      }
+      const newPlayer = updatePlayer(prev.player, combinedKeys, newPlatforms, deltaTime, boostAvailable);
 
-      // Update enemies
       const newEnemies = updateEnemies(prev.enemies, deltaTime, newPlayer.position.x, newPlayer.position.y);
 
       // Check enemy collisions
@@ -107,7 +100,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
       let newParticles = [...prev.particles];
       let screenShake = Math.max(0, prev.screenShake - deltaTime * 10);
 
-      if (invincibleTimer <= 0) {
+      if (invincibleTimer <= 0 && !spawnImmune) {
         for (const enemy of newEnemies) {
           if (checkEnemyCollision(newPlayer, enemy)) {
             playerHearts = Math.max(0, playerHearts - 1);
@@ -204,6 +197,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
       return {
         ...prev,
         player: newPlayer,
+        platforms: newPlatforms,
         hearts: newHearts,
         enemies: newEnemies,
         particles: newParticles,
@@ -218,6 +212,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
         boostCooldown,
         playerHearts,
         invincibleTimer,
+        spawnImmune,
       };
     });
 

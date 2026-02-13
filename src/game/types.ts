@@ -23,6 +23,9 @@ export interface Platform {
   width: number;
   height: number;
   type: 'cloud' | 'ground';
+  moveSpeed?: number;
+  moveRange?: number;
+  originalX?: number;
 }
 
 export interface Heart {
@@ -89,6 +92,7 @@ export interface GameState {
   playerHearts: number;
   maxPlayerHearts: number;
   invincibleTimer: number;
+  spawnImmune: boolean;
   background: LevelBackground;
 }
 
