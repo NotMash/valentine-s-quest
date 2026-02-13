@@ -212,6 +212,7 @@ const GameUI: React.FC<GameUIProps> = ({
 
   // In-game HUD
   const boostPercent = (boostEnergy / boostMaxEnergy) * 100;
+  const boostFillPercent = Math.max(0, Math.min(100, boostPercent));
   const boostReady = boostEnergy > 0;
   const boostCharged = boostPercent >= 95;
 
@@ -240,12 +241,12 @@ const GameUI: React.FC<GameUIProps> = ({
       <div className="mobile-boost-strip absolute top-12 left-1/2 -translate-x-1/2 md:hidden bg-white/80 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md hud-glass">
         <div className="flex items-center gap-2 min-w-[130px]">
           <Zap className={`w-3.5 h-3.5 ${boostReady ? 'text-love-coral' : 'text-muted-foreground/40'}`} />
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-foreground/20 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-200 ${
                 boostCooldown ? 'bg-muted-foreground/30' : 'energy-flow'
               }`}
-              style={{ width: `${boostPercent}%` }}
+              style={{ width: `${boostFillPercent}%` }}
             />
           </div>
         </div>
@@ -259,12 +260,12 @@ const GameUI: React.FC<GameUIProps> = ({
             <span className="font-semibold text-foreground/70">Shift</span>
             <span className="font-semibold text-foreground/60">{Math.round(boostPercent)}%</span>
           </div>
-          <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+          <div className="w-full h-2.5 bg-foreground/20 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-200 ${
                 boostCooldown ? 'bg-muted-foreground/30' : 'energy-flow'
               }`}
-              style={{ width: `${boostPercent}%` }}
+              style={{ width: `${boostFillPercent}%` }}
             />
           </div>
         </div>

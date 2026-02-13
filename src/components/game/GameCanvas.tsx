@@ -173,7 +173,7 @@ const prepareSpriteForDraw = (image: HTMLImageElement): HTMLCanvasElement | null
       const b = data[pixelOffset + 2];
       const maxChannel = Math.max(r, g, b);
       const minChannel = Math.min(r, g, b);
-      return maxChannel <= 24 && maxChannel - minChannel <= 10;
+      return maxChannel <= 8 && maxChannel - minChannel <= 4;
     };
 
     const enqueue = (x: number, y: number) => {
@@ -709,8 +709,8 @@ const drawPlayerSprite = (
   ctx.arc(0, 0, width * 0.95, 0, Math.PI * 2);
   ctx.fill();
 
-  const drawW = width * 1.35;
-  const drawH = height * 1.6;
+  const drawW = width * 1.55;
+  const drawH = height * 1.82;
   const dx = -drawW / 2;
   const dy = -drawH * 0.62;
 
