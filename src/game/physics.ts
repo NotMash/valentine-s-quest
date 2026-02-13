@@ -6,9 +6,13 @@ export const updatePlayer = (
   keys: KeyState,
   platforms: Platform[],
   deltaTime: number,
-  boostAvailable: boolean
-): Player => {
-  let newPlayer = { ...player };
+  boostEnergy: number,
+  boostMaxEnergy: number
+): { player: Player; fellOff: boolean; boostUsed: number; jumped: boolean } => {
+  const newPlayer = { ...player };
+  let fellOff = false;
+  let boostUsed = 0;
+  let jumped = false;
   
   // Horizontal movement
   if (keys.left) {
@@ -23,10 +27,14 @@ export const updatePlayer = (
 
   // Jump with momentum bonus — faster horizontal speed = higher jump
   if (keys.up && newPlayer.isGrounded) {
+    jumped = true;
     const speedRatio = Math.abs(newPlayer.velocity.x) / GAME_CONFIG.moveSpeed;
     const momentumBonus = 1 + speedRatio * GAME_CONFIG.momentumBonus;
-    const useBoost = keys.boost && boostAvailable;
-    const baseForce = useBoost ? GAME_CONFIG.boostJumpForce : GAME_CONFIG.jumpForce;
+    const boostRatio = keys.boost ? Math.max(0, Math.min(1, boostEnergy / boostMaxEnergy)) : 0;
+    const baseForce = GAME_CONFIG.jumpForce + (GAME_CONFIG.boostJumpForce - GAME_CONFIG.jumpForce) * boostRatio;
+    if (boostRatio > 0) {
+      boostUsed = Math.min(boostEnergy, GAME_CONFIG.boostCost * boostRatio);
+    }
     newPlayer.velocity.y = -(baseForce * momentumBonus);
     newPlayer.isGrounded = false;
   }
@@ -66,9 +74,10 @@ export const updatePlayer = (
   if (newPlayer.position.y > GAME_CONFIG.height + 50) {
     newPlayer.position = { x: 100, y: 400 };
     newPlayer.velocity = { x: 0, y: 0 };
+    fellOff = true;
   }
 
-  return newPlayer;
+  return { player: newPlayer, fellOff, boostUsed, jumped };
 };
 
 const checkPlatformCollision = (player: Player, platform: Platform): boolean => {
@@ -105,47 +114,113 @@ export const checkEnemyCollision = (player: Player, enemy: Enemy): boolean => {
   );
 };
 
-export const updateEnemies = (enemies: Enemy[], deltaTime: number, playerX?: number, playerY?: number): Enemy[] => {
+export const updateEnemies = (
+  enemies: Enemy[],
+  platforms: Platform[],
+  deltaTime: number,
+  playerX?: number,
+  playerY?: number
+): Enemy[] => {
   return enemies.map(enemy => {
     let newX = enemy.x;
+    let newY = enemy.y;
     let newVx = enemy.vx;
     let newVy = enemy.vy || 0;
-    let newJumpTimer = enemy.jumpTimer;
+    let newJumpTimer = enemy.jumpTimer ?? 0;
+    let isGrounded = enemy.isGrounded ?? false;
+
+    const dx = playerX !== undefined ? playerX - enemy.x : 0;
+    const dy = playerY !== undefined ? playerY - enemy.y : 0;
 
     if (enemy.type === 'chaser' && playerX !== undefined) {
-      // Chase player horizontally
-      const dx = playerX - enemy.x;
       const chaseSpeed = enemy.chaseSpeed || 100;
-      if (Math.abs(dx) < 400) {
+      if (Math.abs(dx) < 420) {
         newVx = dx > 0 ? chaseSpeed : -chaseSpeed;
       }
     }
 
     if (enemy.type === 'jumper') {
-      newJumpTimer = (newJumpTimer || 0) - deltaTime;
-      if (newJumpTimer <= 0) {
-        newVy = -350;
-        newJumpTimer = 2 + Math.random();
+      newJumpTimer -= deltaTime;
+      if (isGrounded && newJumpTimer <= 0) {
+        newVy = -(enemy.jumpForce ?? 380);
+        isGrounded = false;
+        newJumpTimer = 1.4 + Math.random() * 1.2;
       }
-      newVy += 800 * deltaTime; // gravity for jumpers
+    } else if (enemy.type === 'chaser' && isGrounded && playerY !== undefined && Math.abs(dx) < 180 && dy < -35) {
+      // Chasers can climb to nearby higher platforms when the player is above.
+      newVy = -(enemy.jumpForce ?? 430);
+      isGrounded = false;
     }
 
-    newX += newVx * deltaTime;
-    let newY = enemy.y + newVy * deltaTime;
+    // Turn around before running off ledges.
+    if (isGrounded) {
+      const feetY = enemy.y + enemy.height;
+      const lookAheadX = newVx > 0 ? enemy.x + enemy.width + 10 : enemy.x - 10;
+      const hasGroundAhead = enemyGroundAhead(lookAheadX, feetY, enemy, platforms);
+      if (!hasGroundAhead) {
+        newVx = -newVx;
+      }
+    }
 
-    // Boundary patrol
+    const prevY = newY;
+    const gravity = enemy.type === 'jumper' ? 900 : 1200;
+    newVy += gravity * deltaTime;
+
+    newX += newVx * deltaTime;
+    newY += newVy * deltaTime;
+    isGrounded = false;
+
+    // Horizontal boundary patrol fallback.
     if (newX <= enemy.minX || newX + enemy.width >= enemy.maxX) {
       newVx = -newVx;
       newX = Math.max(enemy.minX, Math.min(newX, enemy.maxX - enemy.width));
     }
 
-    // Keep jumpers from falling off screen
-    if (enemy.type === 'jumper' && newY > 520) {
-      newY = 520;
-      newVy = 0;
+    // Collision with world platforms (land from above).
+    for (const platform of platforms) {
+      const intersects =
+        newX < platform.x + platform.width &&
+        newX + enemy.width > platform.x &&
+        newY < platform.y + platform.height &&
+        newY + enemy.height > platform.y;
+
+      if (!intersects) continue;
+
+      const prevBottom = prevY + enemy.height;
+      const newBottom = newY + enemy.height;
+      const landing = newVy >= 0 && prevBottom <= platform.y + 6 && newBottom >= platform.y;
+
+      if (landing) {
+        newY = platform.y - enemy.height;
+        newVy = 0;
+        isGrounded = true;
+      }
     }
 
-    return { ...enemy, x: newX, y: newY, vx: newVx, vy: newVy, jumpTimer: newJumpTimer };
+    // Failsafe: respawn to baseline if enemy falls far off map.
+    if (newY > GAME_CONFIG.height + 80) {
+      newY = 520;
+      newVy = 0;
+      isGrounded = true;
+    }
+
+    return {
+      ...enemy,
+      x: newX,
+      y: newY,
+      vx: newVx,
+      vy: newVy,
+      jumpTimer: newJumpTimer,
+      isGrounded,
+    };
+  });
+};
+
+const enemyGroundAhead = (x: number, feetY: number, enemy: Enemy, platforms: Platform[]): boolean => {
+  return platforms.some(platform => {
+    if (x < platform.x || x > platform.x + platform.width) return false;
+    if (platform.x > enemy.maxX || platform.x + platform.width < enemy.minX) return false;
+    return Math.abs(platform.y - feetY) <= 14;
   });
 };
 

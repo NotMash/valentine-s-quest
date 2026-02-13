@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import GameCanvas from './GameCanvas';
 import GameUI from './GameUI';
 import MobileControls from './MobileControls';
@@ -53,14 +53,15 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
   const [gameState, setGameState] = useState<GameState>(() => createInitialState(1));
   const keys = useKeyboard();
   const [mobileKeys, setMobileKeys] = useState({ left: false, right: false, up: false, boost: false });
-  const prevGrounded = useRef(false);
-
-  const combinedKeys = {
+  const combinedKeys = useMemo(() => ({
     left: keys.left || mobileKeys.left,
     right: keys.right || mobileKeys.right,
     up: keys.up || mobileKeys.up,
     boost: keys.boost || mobileKeys.boost,
-  };
+  }), [
+    keys.left, keys.right, keys.up, keys.boost,
+    mobileKeys.left, mobileKeys.right, mobileKeys.up, mobileKeys.boost,
+  ]);
 
   const gameLoop = useCallback((deltaTime: number) => {
     setGameState(prev => {
@@ -70,35 +71,71 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
       const playerMoved = combinedKeys.left || combinedKeys.right || combinedKeys.up;
       const spawnImmune = prev.spawnImmune && !playerMoved;
 
-      // Boost energy
-      let boostEnergy = prev.boostEnergy;
-      let boostCooldown = prev.boostCooldown;
-      const wantsBoost = combinedKeys.boost && combinedKeys.up && prev.player.isGrounded;
-      
-      if (wantsBoost && boostEnergy >= GAME_CONFIG.boostCost && !boostCooldown) {
-        // Will consume on jump
-      }
-
-      const boostAvailable = boostEnergy >= GAME_CONFIG.boostCost && !boostCooldown;
+      // Boost energy regenerates continuously and is consumed on boosted jump.
+      let boostEnergy = Math.min(
+        prev.boostMaxEnergy,
+        prev.boostEnergy + GAME_CONFIG.boostRegenRate * deltaTime
+      );
 
       // Update platforms (moving clouds)
+      const cloudSpeedMultiplier = 1 + Math.max(0, prev.level - 1) * 0.2;
+      const cloudRangeMultiplier = 1 + Math.max(0, prev.level - 1) * 0.15;
+
       const newPlatforms = prev.platforms.map(p => {
         if (p.moveSpeed && p.moveRange && p.originalX !== undefined) {
-          const newX = p.originalX + Math.sin(Date.now() * 0.001 * p.moveSpeed) * p.moveRange;
+          const newX = p.originalX +
+            Math.sin(Date.now() * 0.001 * p.moveSpeed * cloudSpeedMultiplier) *
+            (p.moveRange * cloudRangeMultiplier);
           return { ...p, x: newX };
         }
         return p;
       });
 
-      const newPlayer = updatePlayer(prev.player, combinedKeys, newPlatforms, deltaTime, boostAvailable);
+      const {
+        player: newPlayer,
+        fellOff,
+        boostUsed,
+        jumped,
+      } = updatePlayer(
+        prev.player,
+        combinedKeys,
+        newPlatforms,
+        deltaTime,
+        boostEnergy,
+        prev.boostMaxEnergy
+      );
 
-      const newEnemies = updateEnemies(prev.enemies, deltaTime, newPlayer.position.x, newPlayer.position.y);
+      if (boostUsed > 0) {
+        boostEnergy = Math.max(0, boostEnergy - boostUsed);
+      }
+
+      const boostCooldown = boostEnergy <= 0.01;
+
+      if (jumped) {
+        playJumpSound();
+      }
+
+      const newEnemies = updateEnemies(prev.enemies, newPlatforms, deltaTime, newPlayer.position.x, newPlayer.position.y);
 
       // Check enemy collisions
       let playerHearts = prev.playerHearts;
       let invincibleTimer = Math.max(0, prev.invincibleTimer - deltaTime);
       let newParticles = [...prev.particles];
       let screenShake = Math.max(0, prev.screenShake - deltaTime * 10);
+
+      if (fellOff && playerHearts > 0) {
+        playerHearts = Math.max(0, playerHearts - 1);
+        invincibleTimer = 1;
+        screenShake = 6;
+        playHitSound();
+        newParticles = [
+          ...newParticles,
+          ...createDamageParticles(
+            newPlayer.position.x + newPlayer.width / 2,
+            newPlayer.position.y + newPlayer.height / 2
+          ),
+        ];
+      }
 
       if (invincibleTimer <= 0 && !spawnImmune) {
         for (const enemy of newEnemies) {
@@ -250,7 +287,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-sky-gradient p-4">
+    <div className="game-shell flex flex-col items-center justify-between md:justify-center min-h-[100dvh] bg-sky-gradient px-2 py-3 md:p-4">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {[...Array(6)].map((_, i) => (
           <div
@@ -268,7 +305,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
         ))}
       </div>
 
-      <div className="relative w-full max-w-[800px] aspect-[4/3]">
+      <div className="relative w-full max-w-[800px] aspect-[4/3] rounded-2xl overflow-hidden mobile-stage">
         <div className="absolute inset-0 flex items-center justify-center">
           <GameCanvas gameState={gameState} />
         </div>
@@ -301,10 +338,12 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
         onJump={() => setMobileKeys(prev => ({ ...prev, up: true }))}
         onBoostStart={() => setMobileKeys(prev => ({ ...prev, boost: true }))}
         onBoostEnd={() => setMobileKeys(prev => ({ ...prev, boost: false }))}
+        boostPercent={(gameState.boostEnergy / gameState.boostMaxEnergy) * 100}
+        boostReady={gameState.boostEnergy > 0}
       />
 
       <p className="mt-4 text-sm text-foreground/60 text-center hidden md:block">
-        Arrow Keys / WASD to move • Space / Up to jump • Hold Shift + Jump for boost 🚀 • Build momentum for higher jumps!
+        Arrow Keys / WASD to move • Space / Up to jump • Hold Shift + Jump to use available boost energy 🚀 • Build momentum for higher jumps!
       </p>
     </div>
   );

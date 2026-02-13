@@ -99,7 +99,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
       ref={canvasRef}
       width={GAME_CONFIG.width}
       height={GAME_CONFIG.height}
-      className="rounded-2xl game-glow"
+      className="w-full h-full rounded-2xl game-glow"
     />
   );
 };

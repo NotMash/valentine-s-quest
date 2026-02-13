@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Zap, ArrowUp, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Heart, Zap } from 'lucide-react';
 
 interface GameUIProps {
   score: number;
@@ -63,7 +63,7 @@ const GameUI: React.FC<GameUIProps> = ({
           {/* Controls section */}
           <div className="bg-white/70 rounded-xl p-4 mb-4 text-left shadow-sm">
             <h3 className="font-semibold text-foreground text-sm mb-2 text-center">🎮 Controls</h3>
-            <div className="grid grid-cols-2 gap-2 text-xs text-foreground/80">
+            <div className="hidden md:grid grid-cols-2 gap-2 text-xs text-foreground/80">
               <div className="flex items-center gap-2">
                 <div className="flex gap-0.5">
                   <span className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px]">←</span>
@@ -81,8 +81,13 @@ const GameUI: React.FC<GameUIProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 <span className="bg-muted px-1.5 py-0.5 rounded font-mono text-[10px]">Shift</span>
-                <span>Boost Jump 🚀</span>
+                <span>Boost Jump (uses energy) 🚀</span>
               </div>
+            </div>
+            <div className="md:hidden space-y-1 text-xs text-foreground/80 text-center">
+              <p>Use the bottom-left arrows to move</p>
+              <p>Tap the big ↑ button to jump</p>
+              <p>Hold ⚡ and jump to spend boost energy</p>
             </div>
             <div className="mt-2 pt-2 border-t border-border/50 text-[10px] text-foreground/60 text-center">
               💡 Move fast to build momentum for higher jumps! • Avoid enemies! 👾
@@ -207,38 +212,61 @@ const GameUI: React.FC<GameUIProps> = ({
 
   // In-game HUD
   const boostPercent = (boostEnergy / boostMaxEnergy) * 100;
+  const boostReady = boostEnergy > 0;
+  const boostCharged = boostPercent >= 95;
 
   return (
     <>
       {/* Top-left: Level + Hearts collected */}
-      <div className="absolute top-4 left-4 flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-md">
-        <span className="text-sm font-semibold text-foreground/60">Lv.{level}</span>
-        <Heart className="w-5 h-5 text-love-pink fill-love-pink animate-pulse-heart" />
-        <span className="font-semibold text-foreground text-sm">
+      <div className="absolute top-2 left-2 md:top-4 md:left-4 flex items-center gap-2 md:gap-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1.5 md:px-4 md:py-2 shadow-md">
+        <span className="text-xs md:text-sm font-semibold text-foreground/60">Lv.{level}</span>
+        <Heart className="w-4 h-4 md:w-5 md:h-5 text-love-pink fill-love-pink animate-pulse-heart" />
+        <span className="font-semibold text-foreground text-xs md:text-sm">
           {score} / {totalHearts}
         </span>
       </div>
 
       {/* Top-right: Player health */}
-      <div className="absolute top-4 right-4 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 shadow-md">
+      <div className="absolute top-2 right-2 md:top-4 md:right-4 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-full px-2.5 py-1.5 md:px-3 md:py-2 shadow-md">
         {[...Array(maxPlayerHearts)].map((_, i) => (
           <Heart
             key={i}
-            className={`w-4 h-4 ${i < playerHearts ? 'text-love-pink fill-love-pink' : 'text-muted-foreground/30'}`}
+            className={`w-3.5 h-3.5 md:w-4 md:h-4 ${i < playerHearts ? 'text-love-pink fill-love-pink' : 'text-muted-foreground/30'}`}
           />
         ))}
       </div>
 
+      {/* Mobile boost strip */}
+      <div className="mobile-boost-strip absolute top-12 left-1/2 -translate-x-1/2 md:hidden bg-white/80 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md">
+        <div className="flex items-center gap-2 min-w-[130px]">
+          <Zap className={`w-3.5 h-3.5 ${boostReady ? 'text-love-coral' : 'text-muted-foreground/40'}`} />
+          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-200 ${
+                boostCooldown ? 'bg-muted-foreground/30' : 'energy-flow'
+              }`}
+              style={{ width: `${boostPercent}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Bottom-left: Boost bar */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 shadow-md">
-        <Zap className={`w-4 h-4 ${boostCooldown ? 'text-muted-foreground/40' : 'text-love-coral'}`} />
-        <div className="w-20 h-2.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-200 ${
-              boostCooldown ? 'bg-muted-foreground/30' : 'bg-love-coral'
-            }`}
-            style={{ width: `${boostPercent}%` }}
-          />
+      <div className="absolute bottom-4 left-4 hidden md:flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 shadow-md">
+        <Zap className={`w-4 h-4 ${boostReady ? 'text-love-coral' : 'text-muted-foreground/40'} ${boostCharged ? 'animate-pulse-heart' : ''}`} />
+        <div className="min-w-[118px]">
+          <div className="flex items-center justify-between text-[10px] leading-none mb-1">
+            <span className="font-semibold text-foreground/70">Shift</span>
+            <span className="font-semibold text-foreground/60">{Math.round(boostPercent)}%</span>
+          </div>
+          <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-200 ${
+                boostCooldown ? 'bg-muted-foreground/30' : 'energy-flow'
+              }`}
+              style={{ width: `${boostPercent}%` }}
+            />
+          </div>
         </div>
       </div>
     </>

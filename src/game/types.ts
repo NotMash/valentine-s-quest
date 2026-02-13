@@ -50,6 +50,8 @@ export interface Enemy {
   type: 'patrol' | 'chaser' | 'jumper';
   chaseSpeed?: number;
   jumpTimer?: number;
+  isGrounded?: boolean;
+  jumpForce?: number;
 }
 
 export interface Particle {

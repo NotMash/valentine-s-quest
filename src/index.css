@@ -102,9 +102,14 @@
     @apply border-border;
   }
 
+  html, body, #root {
+    min-height: 100%;
+  }
+
   body {
     @apply bg-background text-foreground font-fredoka;
     font-family: 'Fredoka', sans-serif;
+    overscroll-behavior: none;
   }
 }
 
@@ -182,6 +187,15 @@
   }
 }
 
+@keyframes energy-flow {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 120px 0;
+  }
+}
+
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
@@ -192,4 +206,76 @@
 
 .animate-sparkle {
   animation: sparkle 1.5s ease-in-out infinite;
+}
+
+.energy-flow {
+  background-image: linear-gradient(
+    90deg,
+    hsl(var(--love-coral)) 0%,
+    hsl(var(--love-pink)) 50%,
+    hsl(var(--love-coral)) 100%
+  );
+  background-size: 120px 100%;
+  animation: energy-flow 1.4s linear infinite;
+}
+
+.game-shell {
+  padding-top: max(0.45rem, env(safe-area-inset-top));
+  padding-bottom: max(0.45rem, env(safe-area-inset-bottom));
+}
+
+.mobile-control-btn {
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.mobile-control-active {
+  transform: translateY(1px) scale(0.96);
+}
+
+@media (max-width: 767px) {
+  .game-shell {
+    touch-action: none;
+    user-select: none;
+  }
+
+  .mobile-stage {
+    max-width: min(800px, calc(100vw - 0.75rem));
+    max-height: min(62dvh, calc(100dvh - 210px));
+  }
+}
+
+@media (max-width: 940px) and (orientation: landscape) and (max-height: 560px) {
+  .mobile-stage {
+    max-height: min(72dvh, calc(100dvh - 122px));
+  }
+
+  .mobile-controls-panel {
+    padding: 0.45rem 0.65rem;
+    border-radius: 1.05rem;
+  }
+
+  .mobile-controls-row {
+    gap: 0.45rem;
+  }
+
+  .mobile-control-dir,
+  .mobile-control-boost {
+    width: 2.8rem;
+    height: 2.8rem;
+  }
+
+  .mobile-control-jump {
+    width: 3.9rem;
+    height: 3.9rem;
+  }
+
+  .mobile-boost-label {
+    font-size: 9px;
+  }
+
+  .mobile-boost-strip {
+    display: none;
+  }
 }

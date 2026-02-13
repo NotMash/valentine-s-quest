@@ -3,6 +3,9 @@ let audioCtx: AudioContext | null = null;
 
 const getCtx = (): AudioContext => {
   if (!audioCtx) audioCtx = new AudioContext();
+  if (audioCtx.state === 'suspended') {
+    void audioCtx.resume();
+  }
   return audioCtx;
 };
 
