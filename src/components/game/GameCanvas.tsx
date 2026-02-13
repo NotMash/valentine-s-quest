@@ -34,11 +34,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
     gradient.addColorStop(1, bg.skyBottom);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, GAME_CONFIG.width, GAME_CONFIG.height);
+    drawAtmosphericLight(ctx, frameRef.current, bg.name);
 
     // Stars for night level
     if (bg.name === 'night') {
       drawStars(ctx, frameRef.current);
     }
+
+    drawAmbientPetals(ctx, frameRef.current, bg.name);
 
     // Draw decorative clouds
     drawBackgroundClouds(ctx, frameRef.current, bg.name);
@@ -123,20 +126,143 @@ const drawStars = (ctx: CanvasRenderingContext2D, frame: number) => {
   ctx.globalAlpha = 1;
 };
 
+const drawAtmosphericLight = (ctx: CanvasRenderingContext2D, frame: number, theme: string) => {
+  const configs: Record<string, {
+    x: number;
+    y: number;
+    radius: number;
+    core: string;
+    mid: string;
+    hazeA: string;
+    hazeB: string;
+    vignette: string;
+  }> = {
+    garden: {
+      x: 690,
+      y: 110,
+      radius: 210,
+      core: 'rgba(255, 245, 210, 0.35)',
+      mid: 'rgba(255, 200, 185, 0.2)',
+      hazeA: 'rgba(255, 255, 255, 0.08)',
+      hazeB: 'rgba(255, 168, 203, 0.08)',
+      vignette: 'rgba(255, 155, 193, 0.22)',
+    },
+    sunset: {
+      x: 680,
+      y: 90,
+      radius: 230,
+      core: 'rgba(255, 220, 170, 0.38)',
+      mid: 'rgba(255, 164, 132, 0.24)',
+      hazeA: 'rgba(255, 236, 205, 0.12)',
+      hazeB: 'rgba(255, 173, 143, 0.1)',
+      vignette: 'rgba(255, 137, 117, 0.2)',
+    },
+    twilight: {
+      x: 640,
+      y: 120,
+      radius: 220,
+      core: 'rgba(236, 223, 255, 0.34)',
+      mid: 'rgba(205, 166, 255, 0.22)',
+      hazeA: 'rgba(215, 186, 255, 0.1)',
+      hazeB: 'rgba(255, 194, 235, 0.08)',
+      vignette: 'rgba(144, 100, 190, 0.22)',
+    },
+    night: {
+      x: 620,
+      y: 90,
+      radius: 250,
+      core: 'rgba(194, 220, 255, 0.26)',
+      mid: 'rgba(128, 152, 255, 0.14)',
+      hazeA: 'rgba(132, 173, 255, 0.09)',
+      hazeB: 'rgba(77, 109, 224, 0.08)',
+      vignette: 'rgba(14, 20, 56, 0.38)',
+    },
+    love: {
+      x: 650,
+      y: 95,
+      radius: 230,
+      core: 'rgba(255, 230, 237, 0.36)',
+      mid: 'rgba(255, 174, 197, 0.24)',
+      hazeA: 'rgba(255, 203, 228, 0.1)',
+      hazeB: 'rgba(255, 171, 202, 0.1)',
+      vignette: 'rgba(216, 112, 151, 0.22)',
+    },
+  };
+
+  const base = configs[theme] ?? configs.garden;
+  const t = frame * 0.015;
+  const lightX = base.x + Math.sin(t) * 18;
+  const lightY = base.y + Math.cos(t * 0.8) * 10;
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  const glow = ctx.createRadialGradient(lightX, lightY, 10, lightX, lightY, base.radius);
+  glow.addColorStop(0, base.core);
+  glow.addColorStop(0.62, base.mid);
+  glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, GAME_CONFIG.width, GAME_CONFIG.height);
+
+  const haze = ctx.createLinearGradient(0, 0, GAME_CONFIG.width, GAME_CONFIG.height);
+  haze.addColorStop(0, base.hazeA);
+  haze.addColorStop(1, base.hazeB);
+  ctx.fillStyle = haze;
+  ctx.fillRect(0, 0, GAME_CONFIG.width, GAME_CONFIG.height);
+  ctx.restore();
+
+  const vignette = ctx.createRadialGradient(
+    GAME_CONFIG.width * 0.5,
+    GAME_CONFIG.height * 0.45,
+    GAME_CONFIG.height * 0.2,
+    GAME_CONFIG.width * 0.5,
+    GAME_CONFIG.height * 0.5,
+    GAME_CONFIG.height * 0.75
+  );
+  vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  vignette.addColorStop(1, base.vignette);
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, GAME_CONFIG.width, GAME_CONFIG.height);
+};
+
+const drawAmbientPetals = (ctx: CanvasRenderingContext2D, frame: number, theme: string) => {
+  const palette = theme === 'night'
+    ? ['rgba(172, 198, 255, 0.8)', 'rgba(219, 188, 255, 0.7)', 'rgba(255, 201, 242, 0.7)']
+    : ['rgba(255, 174, 204, 0.8)', 'rgba(255, 200, 219, 0.72)', 'rgba(255, 222, 234, 0.68)'];
+
+  const seeds = [
+    { phase: 0.3, speed: 0.34, amplitude: 14, y: 82, size: 7 },
+    { phase: 1.1, speed: 0.28, amplitude: 12, y: 142, size: 6 },
+    { phase: 2.2, speed: 0.24, amplitude: 16, y: 210, size: 7 },
+    { phase: 3.4, speed: 0.31, amplitude: 13, y: 286, size: 6 },
+    { phase: 4.8, speed: 0.27, amplitude: 12, y: 360, size: 7 },
+    { phase: 5.6, speed: 0.22, amplitude: 15, y: 430, size: 6 },
+  ];
+
+  ctx.save();
+  ctx.globalAlpha = theme === 'night' ? 0.32 : 0.4;
+  seeds.forEach((seed, i) => {
+    const x = ((frame * seed.speed) + i * 150) % (GAME_CONFIG.width + 120) - 60;
+    const y = seed.y + Math.sin(frame * 0.02 + seed.phase) * seed.amplitude;
+    drawMiniHeart(ctx, x, y, seed.size, palette[i % palette.length]);
+  });
+  ctx.restore();
+};
+
 const drawBackgroundClouds = (ctx: CanvasRenderingContext2D, frame: number, theme: string) => {
   const alpha = theme === 'night' ? 0.15 : 0.4;
   ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
   
   const clouds = [
-    { x: 50, y: 80, size: 60 },
-    { x: 200, y: 120, size: 45 },
-    { x: 500, y: 60, size: 55 },
-    { x: 650, y: 140, size: 50 },
+    { x: 50, y: 80, size: 60, speed: 0.009, depth: 1 },
+    { x: 200, y: 120, size: 45, speed: 0.012, depth: 0.7 },
+    { x: 500, y: 60, size: 55, speed: 0.007, depth: 1.2 },
+    { x: 650, y: 140, size: 50, speed: 0.01, depth: 0.9 },
   ];
 
   clouds.forEach(cloud => {
     const floatOffset = Math.sin(frame * 0.02 + cloud.x) * 3;
-    drawCloudShape(ctx, cloud.x, cloud.y + floatOffset, cloud.size);
+    const driftX = Math.sin(frame * cloud.speed + cloud.y * 0.03) * (8 + cloud.depth * 6);
+    drawCloudShape(ctx, cloud.x + driftX, cloud.y + floatOffset, cloud.size);
   });
 };
 
@@ -165,6 +291,22 @@ const drawCloudPlatform = (
   }
   ctx.arc(x + width - radius, centerY, radius, 0, Math.PI * 2);
   ctx.fill();
+
+  const highlight = ctx.createLinearGradient(x, y, x, y + height);
+  highlight.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+  highlight.addColorStop(0.6, 'rgba(255, 255, 255, 0.35)');
+  highlight.addColorStop(1, 'rgba(219, 236, 255, 0.25)');
+  ctx.fillStyle = highlight;
+  ctx.globalAlpha = 0.65;
+  ctx.beginPath();
+  ctx.arc(x + radius, centerY, radius * 0.95, 0, Math.PI * 2);
+  for (let i = 1; i < width / (radius * 1.5); i++) {
+    ctx.arc(x + radius + i * radius * 1.2, centerY - 4, radius, 0, Math.PI * 2);
+  }
+  ctx.arc(x + width - radius, centerY, radius * 0.95, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
   ctx.restore();
 };
 
@@ -231,10 +373,20 @@ const drawHeart = (
 
 const drawEnemy = (ctx: CanvasRenderingContext2D, enemy: Enemy, frame: number) => {
   const { x, y, width, height } = enemy;
-  const bounce = Math.sin(frame * 0.15) * 3;
+  const bounce = Math.sin(frame * 0.15 + enemy.id) * 3;
+  const tilt = Math.max(-0.22, Math.min(0.22, enemy.vx * 0.0018));
   
   ctx.save();
   ctx.translate(x + width / 2, y + height / 2 + bounce);
+  ctx.rotate(tilt + Math.sin(frame * 0.06 + enemy.id) * 0.04);
+
+  const aura = ctx.createRadialGradient(0, 0, 4, 0, 0, width * 1.25);
+  aura.addColorStop(0, 'rgba(196, 145, 255, 0.45)');
+  aura.addColorStop(1, 'rgba(124, 58, 237, 0)');
+  ctx.fillStyle = aura;
+  ctx.beginPath();
+  ctx.arc(0, 0, width * 1.25, 0, Math.PI * 2);
+  ctx.fill();
   
   // Body — spiky purple blob
   ctx.shadowColor = '#8b5cf6';
@@ -323,15 +475,24 @@ const drawPlayer = (
   const { position, width, height, facingRight, isGrounded, velocity } = player;
   const squish = isGrounded ? 1 : (velocity.y > 0 ? 0.9 : 1.1);
   const stretch = isGrounded ? 1 : (velocity.y > 0 ? 1.1 : 0.9);
+  const idleBob = isGrounded ? Math.sin(frame * 0.09) * 1.8 : 0;
 
   ctx.save();
-  ctx.translate(position.x + width / 2, position.y + height / 2);
+  ctx.translate(position.x + width / 2, position.y + height / 2 + idleBob);
   ctx.scale(facingRight ? 1 : -1, 1);
   ctx.scale(squish, stretch);
 
   const bodySize = width * 0.9;
+  const aura = ctx.createRadialGradient(0, 0, 4, 0, 0, bodySize * 0.95);
+  aura.addColorStop(0, 'rgba(255, 160, 193, 0.35)');
+  aura.addColorStop(1, 'rgba(255, 107, 157, 0)');
+  ctx.fillStyle = aura;
+  ctx.beginPath();
+  ctx.arc(0, 0, bodySize * 0.95, 0, Math.PI * 2);
+  ctx.fill();
+
   ctx.shadowColor = '#ff6b9d';
-  ctx.shadowBlur = 10;
+  ctx.shadowBlur = 14;
   drawHeartShape(ctx, -bodySize / 2, -bodySize / 2 - 5, bodySize, '#ff85a1');
   ctx.shadowBlur = 0;
 

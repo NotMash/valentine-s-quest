@@ -307,6 +307,22 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
   return (
     <div className="game-shell flex flex-col items-center justify-between md:justify-center min-h-[100dvh] bg-sky-gradient px-2 py-3 md:p-4">
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="atmo-blob atmo-blob-1" />
+        <div className="atmo-blob atmo-blob-2" />
+        <div className="atmo-blob atmo-blob-3" />
+        {[...Array(12)].map((_, i) => (
+          <span
+            key={`spark-${i}`}
+            className="twinkle-dot absolute rounded-full bg-white/50"
+            style={{
+              left: `${8 + i * 7.6}%`,
+              top: `${12 + (i % 5) * 14}%`,
+              width: `${2 + (i % 3)}px`,
+              height: `${2 + (i % 3)}px`,
+              animationDelay: `${i * 0.35}s`,
+            }}
+          />
+        ))}
         {[...Array(6)].map((_, i) => (
           <div
             key={i}
@@ -323,7 +339,7 @@ const ValentineGame: React.FC<ValentineGameProps> = ({ girlfriendName }) => {
         ))}
       </div>
 
-      <div className="relative w-full max-w-[800px] aspect-[4/3] rounded-2xl overflow-hidden mobile-stage">
+      <div className="relative w-full max-w-[800px] aspect-[4/3] rounded-2xl overflow-hidden mobile-stage stage-cinematic">
         <div className="absolute inset-0 flex items-center justify-center">
           <GameCanvas gameState={gameState} />
         </div>

@@ -152,8 +152,8 @@
 
   .game-glow {
     box-shadow: 
-      0 0 20px hsl(var(--love-pink) / 0.3),
-      0 0 40px hsl(var(--love-pink) / 0.2),
+      0 20px 40px hsl(var(--love-pink) / 0.22),
+      0 0 24px hsl(var(--love-pink) / 0.25),
       inset 0 0 60px hsl(var(--love-pink) / 0.1);
   }
 }
@@ -196,6 +196,55 @@
   }
 }
 
+@keyframes drift-blob {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  35% {
+    transform: translate3d(-28px, 14px, 0) scale(1.08);
+  }
+  68% {
+    transform: translate3d(20px, -24px, 0) scale(0.93);
+  }
+}
+
+@keyframes twinkle-soft {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes sheen-sweep {
+  0% {
+    transform: translateX(-180%) rotate(24deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.42;
+  }
+  45% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(240%) rotate(24deg);
+    opacity: 0;
+  }
+}
+
+@keyframes float-panel {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
@@ -217,6 +266,102 @@
   );
   background-size: 120px 100%;
   animation: energy-flow 1.4s linear infinite;
+}
+
+.stage-cinematic {
+  box-shadow:
+    0 26px 60px hsl(var(--love-pink) / 0.16),
+    inset 0 0 0 1px hsl(0 0% 100% / 0.35);
+  background: radial-gradient(
+    120% 120% at 50% 0%,
+    hsl(0 0% 100% / 0.28) 0%,
+    hsl(var(--love-pink) / 0.04) 48%,
+    hsl(var(--love-coral) / 0.06) 100%
+  );
+}
+
+.atmo-blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(34px);
+  mix-blend-mode: screen;
+  animation: drift-blob 18s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.atmo-blob-1 {
+  width: 240px;
+  height: 240px;
+  left: 6%;
+  top: 10%;
+  background: radial-gradient(circle, hsl(var(--love-coral) / 0.34), transparent 65%);
+}
+
+.atmo-blob-2 {
+  width: 280px;
+  height: 280px;
+  right: 8%;
+  top: 18%;
+  background: radial-gradient(circle, hsl(var(--love-pink) / 0.34), transparent 70%);
+  animation-delay: -5s;
+}
+
+.atmo-blob-3 {
+  width: 220px;
+  height: 220px;
+  left: 34%;
+  bottom: 14%;
+  background: radial-gradient(circle, hsl(200 95% 90% / 0.3), transparent 68%);
+  animation-delay: -9s;
+}
+
+.twinkle-dot {
+  animation: twinkle-soft 3.2s ease-in-out infinite;
+}
+
+.hud-overlay {
+  background-image: linear-gradient(
+    180deg,
+    hsl(0 0% 100% / 0.08) 0%,
+    hsl(var(--love-pink) / 0.08) 100%
+  );
+}
+
+.hud-modal-card {
+  box-shadow:
+    0 18px 42px hsl(var(--love-pink) / 0.14),
+    inset 0 1px 0 hsl(0 0% 100% / 0.55);
+}
+
+.hud-glass {
+  border: 1px solid hsl(0 0% 100% / 0.58);
+  box-shadow:
+    0 10px 20px hsl(var(--love-pink) / 0.12),
+    inset 0 1px 0 hsl(0 0% 100% / 0.68);
+}
+
+.ui-button-fancy {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ui-button-fancy::after {
+  content: "";
+  position: absolute;
+  top: -140%;
+  left: -60%;
+  width: 44%;
+  height: 340%;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    hsl(0 0% 100% / 0.46) 50%,
+    transparent 100%
+  );
+  transform: translateX(-180%) rotate(24deg);
+  animation: sheen-sweep 3.8s ease-out infinite;
+  pointer-events: none;
 }
 
 .game-shell {

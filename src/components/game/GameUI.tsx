@@ -42,8 +42,8 @@ const GameUI: React.FC<GameUIProps> = ({
 }) => {
   if (!gameStarted) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-love-pink/20 to-love-coral/20 rounded-2xl backdrop-blur-sm">
-        <div className="text-center p-6 animate-fade-in max-w-md">
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-love-pink/20 to-love-coral/20 rounded-2xl backdrop-blur-sm hud-overlay">
+        <div className="text-center p-6 animate-fade-in max-w-md hud-modal-card">
           <div className="flex justify-center gap-2 mb-3">
             {[...Array(3)].map((_, i) => (
               <Heart
@@ -98,7 +98,7 @@ const GameUI: React.FC<GameUIProps> = ({
             onClick={onStart}
             className="px-8 py-3 bg-love-pink text-white rounded-full font-semibold text-lg
                        shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300
-                       hover:bg-love-coral"
+                       hover:bg-love-coral ui-button-fancy"
           >
             Start Playing
           </button>
@@ -109,8 +109,8 @@ const GameUI: React.FC<GameUIProps> = ({
 
   if (gameOver) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-red-900/40 to-red-600/40 rounded-2xl backdrop-blur-sm">
-        <div className="text-center p-8 animate-scale-in">
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-red-900/40 to-red-600/40 rounded-2xl backdrop-blur-sm hud-overlay">
+        <div className="text-center p-8 animate-scale-in hud-modal-card">
           <div className="flex justify-center gap-1 mb-4">
             {[...Array(5)].map((_, i) => (
               <Heart
@@ -129,7 +129,7 @@ const GameUI: React.FC<GameUIProps> = ({
             onClick={onRestart}
             className="px-8 py-4 bg-love-pink text-white rounded-full font-semibold text-lg
                        shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300
-                       hover:bg-love-coral"
+                       hover:bg-love-coral ui-button-fancy"
           >
             Retry Level {level}
           </button>
@@ -140,8 +140,8 @@ const GameUI: React.FC<GameUIProps> = ({
 
   if (levelComplete) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-love-pink/20 to-love-coral/20 rounded-2xl backdrop-blur-sm">
-        <div className="text-center p-8 animate-scale-in">
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-love-pink/20 to-love-coral/20 rounded-2xl backdrop-blur-sm hud-overlay">
+        <div className="text-center p-8 animate-scale-in hud-modal-card">
           <div className="flex justify-center gap-1 mb-4">
             {[...Array(3)].map((_, i) => (
               <Heart
@@ -161,7 +161,7 @@ const GameUI: React.FC<GameUIProps> = ({
             onClick={onNextLevel}
             className="px-8 py-4 bg-love-pink text-white rounded-full font-semibold text-lg
                        shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300
-                       hover:bg-love-coral"
+                       hover:bg-love-coral ui-button-fancy"
           >
             Next Level →
           </button>
@@ -172,8 +172,8 @@ const GameUI: React.FC<GameUIProps> = ({
 
   if (gameWon) {
     return (
-      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-love-pink/30 to-love-coral/30 rounded-2xl backdrop-blur-sm">
-        <div className="text-center p-8 animate-scale-in">
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-love-pink/30 to-love-coral/30 rounded-2xl backdrop-blur-sm hud-overlay">
+        <div className="text-center p-8 animate-scale-in hud-modal-card">
           <div className="flex justify-center gap-1 mb-4">
             {[...Array(5)].map((_, i) => (
               <Heart
@@ -201,7 +201,7 @@ const GameUI: React.FC<GameUIProps> = ({
           <button
             onClick={onRestart}
             className="px-6 py-3 bg-love-coral text-white rounded-full font-semibold
-                       shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                       shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ui-button-fancy"
           >
             Play Again
           </button>
@@ -218,7 +218,7 @@ const GameUI: React.FC<GameUIProps> = ({
   return (
     <>
       {/* Top-left: Level + Hearts collected */}
-      <div className="absolute top-2 left-2 md:top-4 md:left-4 flex items-center gap-2 md:gap-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1.5 md:px-4 md:py-2 shadow-md">
+      <div className="absolute top-2 left-2 md:top-4 md:left-4 flex items-center gap-2 md:gap-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1.5 md:px-4 md:py-2 shadow-md hud-glass">
         <span className="text-xs md:text-sm font-semibold text-foreground/60">Lv.{level}</span>
         <Heart className="w-4 h-4 md:w-5 md:h-5 text-love-pink fill-love-pink animate-pulse-heart" />
         <span className="font-semibold text-foreground text-xs md:text-sm">
@@ -227,7 +227,7 @@ const GameUI: React.FC<GameUIProps> = ({
       </div>
 
       {/* Top-right: Player health */}
-      <div className="absolute top-2 right-2 md:top-4 md:right-4 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-full px-2.5 py-1.5 md:px-3 md:py-2 shadow-md">
+      <div className="absolute top-2 right-2 md:top-4 md:right-4 flex items-center gap-1 bg-white/80 backdrop-blur-sm rounded-full px-2.5 py-1.5 md:px-3 md:py-2 shadow-md hud-glass">
         {[...Array(maxPlayerHearts)].map((_, i) => (
           <Heart
             key={i}
@@ -237,7 +237,7 @@ const GameUI: React.FC<GameUIProps> = ({
       </div>
 
       {/* Mobile boost strip */}
-      <div className="mobile-boost-strip absolute top-12 left-1/2 -translate-x-1/2 md:hidden bg-white/80 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md">
+      <div className="mobile-boost-strip absolute top-12 left-1/2 -translate-x-1/2 md:hidden bg-white/80 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-md hud-glass">
         <div className="flex items-center gap-2 min-w-[130px]">
           <Zap className={`w-3.5 h-3.5 ${boostReady ? 'text-love-coral' : 'text-muted-foreground/40'}`} />
           <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
@@ -252,7 +252,7 @@ const GameUI: React.FC<GameUIProps> = ({
       </div>
 
       {/* Bottom-left: Boost bar */}
-      <div className="absolute bottom-4 left-4 hidden md:flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 shadow-md">
+      <div className="absolute bottom-4 left-4 hidden md:flex items-center gap-3 bg-white/80 backdrop-blur-sm rounded-full px-3 py-2 shadow-md hud-glass">
         <Zap className={`w-4 h-4 ${boostReady ? 'text-love-coral' : 'text-muted-foreground/40'} ${boostCharged ? 'animate-pulse-heart' : ''}`} />
         <div className="min-w-[118px]">
           <div className="flex items-center justify-between text-[10px] leading-none mb-1">
