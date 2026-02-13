@@ -8,6 +8,28 @@ interface GameCanvasProps {
 const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef(0);
+  const playerSpriteRef = useRef<CanvasImageSource | null>(null);
+  const playerSpriteReadyRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      if (cancelled) return;
+      const cleanedSprite = prepareSpriteForDraw(img);
+      playerSpriteRef.current = cleanedSprite ?? img;
+      playerSpriteReadyRef.current = true;
+    };
+    img.onerror = () => {
+      if (cancelled) return;
+      playerSpriteRef.current = null;
+      playerSpriteReadyRef.current = false;
+    };
+    img.src = `${import.meta.env.BASE_URL}player-avatar.png`;
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -90,7 +112,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
 
     // Draw player (blink when invincible)
     if (gameState.invincibleTimer <= 0 || Math.floor(gameState.invincibleTimer * 10) % 2 === 0) {
-      drawPlayer(ctx, gameState.player, frameRef.current);
+      if (playerSpriteReadyRef.current && playerSpriteRef.current) {
+        drawPlayerSprite(ctx, gameState.player, frameRef.current, playerSpriteRef.current);
+      } else {
+        drawPlayer(ctx, gameState.player, frameRef.current);
+      }
     }
 
     ctx.restore();
@@ -108,6 +134,133 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ gameState }) => {
 };
 
 // === Drawing helpers ===
+
+const prepareSpriteForDraw = (image: HTMLImageElement): HTMLCanvasElement | null => {
+  const width = image.naturalWidth;
+  const height = image.naturalHeight;
+  if (!width || !height) return null;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(image, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  const totalPixels = width * height;
+  let transparentPixels = 0;
+  for (let i = 0; i < totalPixels; i++) {
+    if (data[i * 4 + 3] <= 8) transparentPixels++;
+  }
+  const hasMeaningfulTransparency = transparentPixels / totalPixels > 0.02;
+
+  // Only chroma-key black backgrounds on mostly opaque images.
+  // If the asset already includes transparency, preserve its original edges.
+  if (!hasMeaningfulTransparency) {
+    const visited = new Uint8Array(totalPixels);
+    const queue = new Int32Array(totalPixels);
+    let qHead = 0;
+    let qTail = 0;
+
+    const isNearBlack = (pixelOffset: number) => {
+      const alpha = data[pixelOffset + 3];
+      if (alpha < 8) return true;
+      const r = data[pixelOffset];
+      const g = data[pixelOffset + 1];
+      const b = data[pixelOffset + 2];
+      const maxChannel = Math.max(r, g, b);
+      const minChannel = Math.min(r, g, b);
+      return maxChannel <= 24 && maxChannel - minChannel <= 10;
+    };
+
+    const enqueue = (x: number, y: number) => {
+      if (x < 0 || y < 0 || x >= width || y >= height) return;
+      const pixelIndex = y * width + x;
+      if (visited[pixelIndex]) return;
+      const pixelOffset = pixelIndex * 4;
+      if (!isNearBlack(pixelOffset)) return;
+      visited[pixelIndex] = 1;
+      queue[qTail++] = pixelIndex;
+    };
+
+    for (let x = 0; x < width; x++) {
+      enqueue(x, 0);
+      enqueue(x, height - 1);
+    }
+    for (let y = 0; y < height; y++) {
+      enqueue(0, y);
+      enqueue(width - 1, y);
+    }
+
+    while (qHead < qTail) {
+      const pixelIndex = queue[qHead++];
+      const x = pixelIndex % width;
+      const y = Math.floor(pixelIndex / width);
+
+      enqueue(x - 1, y);
+      enqueue(x + 1, y);
+      enqueue(x, y - 1);
+      enqueue(x, y + 1);
+      enqueue(x - 1, y - 1);
+      enqueue(x + 1, y - 1);
+      enqueue(x - 1, y + 1);
+      enqueue(x + 1, y + 1);
+    }
+
+    for (let i = 0; i < totalPixels; i++) {
+      if (!visited[i]) continue;
+      data[i * 4 + 3] = 0;
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const alpha = data[(y * width + x) * 4 + 3];
+      if (alpha <= 8) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+
+  if (maxX < minX || maxY < minY) {
+    return canvas;
+  }
+
+  const trimmedWidth = maxX - minX + 1;
+  const trimmedHeight = maxY - minY + 1;
+  if (trimmedWidth === width && trimmedHeight === height) {
+    return canvas;
+  }
+
+  const trimmedCanvas = document.createElement('canvas');
+  trimmedCanvas.width = trimmedWidth;
+  trimmedCanvas.height = trimmedHeight;
+  const trimmedCtx = trimmedCanvas.getContext('2d');
+  if (!trimmedCtx) return canvas;
+  trimmedCtx.drawImage(
+    canvas,
+    minX,
+    minY,
+    trimmedWidth,
+    trimmedHeight,
+    0,
+    0,
+    trimmedWidth,
+    trimmedHeight
+  );
+  return trimmedCanvas;
+};
 
 const drawStars = (ctx: CanvasRenderingContext2D, frame: number) => {
   ctx.fillStyle = '#ffffff';
@@ -529,6 +682,44 @@ const drawPlayer = (
   ctx.arc(0, 5, 6, 0.2, Math.PI - 0.2);
   ctx.stroke();
 
+  ctx.restore();
+};
+
+const drawPlayerSprite = (
+  ctx: CanvasRenderingContext2D,
+  player: { position: { x: number; y: number }; width: number; height: number; facingRight: boolean; isGrounded: boolean; velocity: { y: number } },
+  frame: number,
+  sprite: CanvasImageSource
+) => {
+  const { position, width, height, facingRight, isGrounded, velocity } = player;
+  const squish = isGrounded ? 1 : (velocity.y > 0 ? 0.9 : 1.08);
+  const stretch = isGrounded ? 1 : (velocity.y > 0 ? 1.08 : 0.92);
+  const idleBob = isGrounded ? Math.sin(frame * 0.09) * 1.6 : 0;
+
+  ctx.save();
+  ctx.translate(position.x + width / 2, position.y + height / 2 + idleBob);
+  ctx.scale(facingRight ? 1 : -1, 1);
+  ctx.scale(squish, stretch);
+
+  const aura = ctx.createRadialGradient(0, 0, 5, 0, 0, width * 0.95);
+  aura.addColorStop(0, 'rgba(255, 165, 198, 0.3)');
+  aura.addColorStop(1, 'rgba(255, 165, 198, 0)');
+  ctx.fillStyle = aura;
+  ctx.beginPath();
+  ctx.arc(0, 0, width * 0.95, 0, Math.PI * 2);
+  ctx.fill();
+
+  const drawW = width * 1.35;
+  const drawH = height * 1.6;
+  const dx = -drawW / 2;
+  const dy = -drawH * 0.62;
+
+  ctx.shadowColor = 'rgba(255, 110, 160, 0.45)';
+  ctx.shadowBlur = 12;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(sprite, dx, dy, drawW, drawH);
+  ctx.shadowBlur = 0;
   ctx.restore();
 };
 
