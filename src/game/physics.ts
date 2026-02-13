@@ -105,15 +105,47 @@ export const checkEnemyCollision = (player: Player, enemy: Enemy): boolean => {
   );
 };
 
-export const updateEnemies = (enemies: Enemy[], deltaTime: number): Enemy[] => {
+export const updateEnemies = (enemies: Enemy[], deltaTime: number, playerX?: number, playerY?: number): Enemy[] => {
   return enemies.map(enemy => {
-    let newX = enemy.x + enemy.vx * deltaTime;
+    let newX = enemy.x;
     let newVx = enemy.vx;
+    let newVy = enemy.vy || 0;
+    let newJumpTimer = enemy.jumpTimer;
+
+    if (enemy.type === 'chaser' && playerX !== undefined) {
+      // Chase player horizontally
+      const dx = playerX - enemy.x;
+      const chaseSpeed = enemy.chaseSpeed || 100;
+      if (Math.abs(dx) < 400) {
+        newVx = dx > 0 ? chaseSpeed : -chaseSpeed;
+      }
+    }
+
+    if (enemy.type === 'jumper') {
+      newJumpTimer = (newJumpTimer || 0) - deltaTime;
+      if (newJumpTimer <= 0) {
+        newVy = -350;
+        newJumpTimer = 2 + Math.random();
+      }
+      newVy += 800 * deltaTime; // gravity for jumpers
+    }
+
+    newX += newVx * deltaTime;
+    let newY = enemy.y + newVy * deltaTime;
+
+    // Boundary patrol
     if (newX <= enemy.minX || newX + enemy.width >= enemy.maxX) {
       newVx = -newVx;
       newX = Math.max(enemy.minX, Math.min(newX, enemy.maxX - enemy.width));
     }
-    return { ...enemy, x: newX, vx: newVx };
+
+    // Keep jumpers from falling off screen
+    if (enemy.type === 'jumper' && newY > 520) {
+      newY = 520;
+      newVy = 0;
+    }
+
+    return { ...enemy, x: newX, y: newY, vx: newVx, vy: newVy, jumpTimer: newJumpTimer };
   });
 };
 

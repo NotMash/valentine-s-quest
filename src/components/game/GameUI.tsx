@@ -6,6 +6,7 @@ interface GameUIProps {
   totalHearts: number;
   gameStarted: boolean;
   gameWon: boolean;
+  gameOver: boolean;
   levelComplete: boolean;
   level: number;
   totalLevels: number;
@@ -25,6 +26,7 @@ const GameUI: React.FC<GameUIProps> = ({
   totalHearts,
   gameStarted,
   gameWon,
+  gameOver,
   levelComplete,
   level,
   totalLevels,
@@ -94,6 +96,37 @@ const GameUI: React.FC<GameUIProps> = ({
                        hover:bg-love-coral"
           >
             Start Playing
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameOver) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-red-900/40 to-red-600/40 rounded-2xl backdrop-blur-sm">
+        <div className="text-center p-8 animate-scale-in">
+          <div className="flex justify-center gap-1 mb-4">
+            {[...Array(5)].map((_, i) => (
+              <Heart
+                key={i}
+                className="w-8 h-8 text-muted-foreground/30"
+              />
+            ))}
+          </div>
+          <h1 className="text-4xl font-bold text-red-400 mb-2">
+            Game Over 💔
+          </h1>
+          <p className="text-lg text-foreground/70 mb-6">
+            Don't give up! Shahina believes in you!
+          </p>
+          <button
+            onClick={onRestart}
+            className="px-8 py-4 bg-love-pink text-white rounded-full font-semibold text-lg
+                       shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300
+                       hover:bg-love-coral"
+          >
+            Try Again from Level 1
           </button>
         </div>
       </div>
