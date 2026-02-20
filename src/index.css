@@ -1,0 +1,426 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+@layer base {
+  :root {
+    --background: 340 100% 97%;
+    --foreground: 340 30% 25%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 340 30% 25%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 340 30% 25%;
+
+    --primary: 340 82% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 340 60% 90%;
+    --secondary-foreground: 340 30% 25%;
+
+    --muted: 340 30% 92%;
+    --muted-foreground: 340 20% 50%;
+
+    --accent: 15 90% 70%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 340 40% 88%;
+    --input: 340 40% 88%;
+    --ring: 340 82% 65%;
+
+    --radius: 1rem;
+
+    /* Game specific colors */
+    --love-pink: 340 82% 65%;
+    --love-coral: 15 90% 70%;
+    --love-red: 0 75% 60%;
+    --love-cream: 40 60% 95%;
+    --cloud-white: 200 30% 98%;
+    --sky-gradient-start: 200 80% 85%;
+    --sky-gradient-end: 340 60% 92%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 340 30% 10%;
+    --foreground: 340 20% 95%;
+
+    --card: 340 30% 12%;
+    --card-foreground: 340 20% 95%;
+
+    --popover: 340 30% 12%;
+    --popover-foreground: 340 20% 95%;
+
+    --primary: 340 82% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 340 30% 20%;
+    --secondary-foreground: 340 20% 95%;
+
+    --muted: 340 30% 18%;
+    --muted-foreground: 340 20% 60%;
+
+    --accent: 15 90% 70%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 340 30% 20%;
+    --input: 340 30% 20%;
+    --ring: 340 82% 65%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html, body, #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-fredoka;
+    font-family: 'Fredoka', sans-serif;
+    overscroll-behavior: none;
+  }
+}
+
+@layer utilities {
+  .font-fredoka {
+    font-family: 'Fredoka', sans-serif;
+  }
+
+  .text-love-pink {
+    color: hsl(var(--love-pink));
+  }
+
+  .bg-love-pink {
+    background-color: hsl(var(--love-pink));
+  }
+
+  .text-love-coral {
+    color: hsl(var(--love-coral));
+  }
+
+  .bg-love-coral {
+    background-color: hsl(var(--love-coral));
+  }
+
+  .bg-sky-gradient {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--sky-gradient-start)) 0%,
+      hsl(var(--sky-gradient-end)) 100%
+    );
+  }
+
+  .heart-shadow {
+    filter: drop-shadow(0 4px 8px hsl(var(--love-pink) / 0.4));
+  }
+
+  .cloud-shadow {
+    filter: drop-shadow(0 4px 12px hsl(200 30% 70% / 0.3));
+  }
+
+  .game-glow {
+    box-shadow: 
+      0 20px 40px hsl(var(--love-pink) / 0.22),
+      0 0 24px hsl(var(--love-pink) / 0.25),
+      inset 0 0 60px hsl(var(--love-pink) / 0.1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-heart {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes energy-flow {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 120px 0;
+  }
+}
+
+@keyframes drift-blob {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  35% {
+    transform: translate3d(-28px, 14px, 0) scale(1.08);
+  }
+  68% {
+    transform: translate3d(20px, -24px, 0) scale(0.93);
+  }
+}
+
+@keyframes twinkle-soft {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes sheen-sweep {
+  0% {
+    transform: translateX(-180%) rotate(24deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.42;
+  }
+  45% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(240%) rotate(24deg);
+    opacity: 0;
+  }
+}
+
+@keyframes float-panel {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-heart {
+  animation: pulse-heart 1s ease-in-out infinite;
+}
+
+.animate-sparkle {
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+.energy-flow {
+  background-image: linear-gradient(
+    90deg,
+    hsl(var(--love-coral)) 0%,
+    hsl(var(--love-pink)) 50%,
+    hsl(var(--love-coral)) 100%
+  );
+  background-size: 120px 100%;
+  animation: energy-flow 1.4s linear infinite;
+}
+
+.stage-cinematic {
+  box-shadow:
+    0 26px 60px hsl(var(--love-pink) / 0.16),
+    inset 0 0 0 1px hsl(0 0% 100% / 0.35);
+  background: radial-gradient(
+    120% 120% at 50% 0%,
+    hsl(0 0% 100% / 0.28) 0%,
+    hsl(var(--love-pink) / 0.04) 48%,
+    hsl(var(--love-coral) / 0.06) 100%
+  );
+}
+
+.atmo-blob {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(34px);
+  mix-blend-mode: screen;
+  animation: drift-blob 18s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.atmo-blob-1 {
+  width: 240px;
+  height: 240px;
+  left: 6%;
+  top: 10%;
+  background: radial-gradient(circle, hsl(var(--love-coral) / 0.34), transparent 65%);
+}
+
+.atmo-blob-2 {
+  width: 280px;
+  height: 280px;
+  right: 8%;
+  top: 18%;
+  background: radial-gradient(circle, hsl(var(--love-pink) / 0.34), transparent 70%);
+  animation-delay: -5s;
+}
+
+.atmo-blob-3 {
+  width: 220px;
+  height: 220px;
+  left: 34%;
+  bottom: 14%;
+  background: radial-gradient(circle, hsl(200 95% 90% / 0.3), transparent 68%);
+  animation-delay: -9s;
+}
+
+.twinkle-dot {
+  animation: twinkle-soft 3.2s ease-in-out infinite;
+}
+
+.hud-overlay {
+  background-image: linear-gradient(
+    180deg,
+    hsl(0 0% 100% / 0.08) 0%,
+    hsl(var(--love-pink) / 0.08) 100%
+  );
+}
+
+.hud-modal-card {
+  box-shadow:
+    0 18px 42px hsl(var(--love-pink) / 0.14),
+    inset 0 1px 0 hsl(0 0% 100% / 0.55);
+}
+
+.hud-glass {
+  border: 1px solid hsl(0 0% 100% / 0.58);
+  box-shadow:
+    0 10px 20px hsl(var(--love-pink) / 0.12),
+    inset 0 1px 0 hsl(0 0% 100% / 0.68);
+}
+
+.ui-button-fancy {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ui-button-fancy::after {
+  content: "";
+  position: absolute;
+  top: -140%;
+  left: -60%;
+  width: 44%;
+  height: 340%;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    hsl(0 0% 100% / 0.46) 50%,
+    transparent 100%
+  );
+  transform: translateX(-180%) rotate(24deg);
+  animation: sheen-sweep 3.8s ease-out infinite;
+  pointer-events: none;
+}
+
+.game-shell {
+  padding-top: max(0.45rem, env(safe-area-inset-top));
+  padding-bottom: max(0.45rem, env(safe-area-inset-bottom));
+}
+
+.mobile-control-btn {
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.mobile-control-active {
+  transform: translateY(1px) scale(0.96);
+}
+
+@media (max-width: 767px) {
+  .game-shell {
+    touch-action: none;
+    user-select: none;
+  }
+
+  .mobile-stage {
+    max-width: min(800px, calc(100vw - 0.75rem));
+    max-height: min(62dvh, calc(100dvh - 210px));
+  }
+}
+
+@media (max-width: 940px) and (orientation: landscape) and (max-height: 560px) {
+  .mobile-stage {
+    max-height: min(72dvh, calc(100dvh - 122px));
+  }
+
+  .mobile-controls-panel {
+    padding: 0.45rem 0.65rem;
+    border-radius: 1.05rem;
+  }
+
+  .mobile-controls-row {
+    gap: 0.45rem;
+  }
+
+  .mobile-control-dir,
+  .mobile-control-boost {
+    width: 2.8rem;
+    height: 2.8rem;
+  }
+
+  .mobile-control-jump {
+    width: 3.9rem;
+    height: 3.9rem;
+  }
+
+  .mobile-boost-label {
+    font-size: 9px;
+  }
+
+  .mobile-boost-strip {
+    display: none;
+  }
+}
